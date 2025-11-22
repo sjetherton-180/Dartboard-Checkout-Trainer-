@@ -1,5 +1,19 @@
 // Dart Checkout Trainer
 
+// Simple beep using AudioContext
+function beep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880; // A5
+    oscillator.start();
+    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.1); // 100ms beep
+}
+
 // Segment numbers
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 
