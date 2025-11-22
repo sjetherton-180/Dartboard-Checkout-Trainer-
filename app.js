@@ -1,6 +1,5 @@
-// Dartboard Checkout Trainer — Fully working with outer number ring
+// Dartboard Checkout Trainer — Fully working with outer numbers and sum display
 
-// Segment numbers and hit definitions
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 const hits = [];
 for (let n = 1; n <= 20; n++) {
@@ -11,7 +10,7 @@ for (let n = 1; n <= 20; n++) {
 hits.push({code:'SB',label:'S 25',value:25,isDouble:false,base:25});
 hits.push({code:'DB',label:'D 25',value:50,isDouble:true,base:25});
 
-// Generate all 3-dart checkouts
+// Generate 3-dart checkouts
 const maxTarget = 170;
 const checkouts = {};
 for(let t=2;t<=maxTarget;t++) checkouts[t]=[];
@@ -26,7 +25,6 @@ for(const a of hits){
     }
   }
 }
-// Remove duplicates
 for(let t=2;t<=maxTarget;t++){
   const seen = new Set();
   const unique = [];
@@ -44,7 +42,7 @@ let history = [];
 let streak = 0;
 let bestStreak = 0;
 
-// Render the dartboard
+// Render dartboard with numbers
 function renderBoard() {
     const container = document.getElementById('dartboard-container');
     container.innerHTML = '';
@@ -53,79 +51,76 @@ function renderBoard() {
     svg.setAttribute('viewBox', '0 0 200 200');
 
     const center = 100;
-    const outerRadius = 90;
-    const tripleInner = 60;
-    const tripleOuter = 70;
-    const doubleInner = 80;
-    const doubleOuter = 90;
-    const singleInner = 30;
-    const singleOuter = 80;
+    const tripleInner = 60, tripleOuter = 70;
+    const doubleInner = 80, doubleOuter = 90;
+    const singleInner = 30, singleOuter = 80;
 
-    // Draw 20 numbered segments
+    // Segments
     segmentOrder.forEach((num, i) => {
-        const angle1 = (i / 20) * 2 * Math.PI - Math.PI / 20;
-        const angle2 = ((i + 1) / 20) * 2 * Math.PI - Math.PI / 20;
+        const angle1 = (i/20)*2*Math.PI - Math.PI/20;
+        const angle2 = ((i+1)/20)*2*Math.PI - Math.PI/20;
 
         // Single
-        const sPath = document.createElementNS(svgNS, 'path');
-        sPath.setAttribute('d', describeArc(center, center, singleOuter, angle1, angle2, singleInner));
-        sPath.setAttribute('fill', i % 2 === 0 ? '#ffffff20' : '#00000020');
-        sPath.setAttribute('class', 'clickable');
-        sPath.addEventListener('click', () => onHitClick(num, 1));
+        const sPath = document.createElementNS(svgNS,'path');
+        sPath.setAttribute('d', describeArc(center,center,singleOuter,angle1,angle2,singleInner));
+        sPath.setAttribute('fill', i%2===0?'#ffffff20':'#00000020');
+        sPath.setAttribute('class','clickable');
+        sPath.addEventListener('click',()=>onHitClick(num,1));
         svg.appendChild(sPath);
 
         // Triple
-        const tPath = document.createElementNS(svgNS, 'path');
-        tPath.setAttribute('d', describeArc(center, center, tripleOuter, angle1, angle2, tripleInner));
-        tPath.setAttribute('fill', i % 2 === 0 ? '#00ff0040' : '#ff000040');
-        tPath.setAttribute('class', 'clickable');
-        tPath.addEventListener('click', () => onHitClick(num, 3));
+        const tPath = document.createElementNS(svgNS,'path');
+        tPath.setAttribute('d', describeArc(center,center,tripleOuter,angle1,angle2,tripleInner));
+        tPath.setAttribute('fill', i%2===0?'#00ff0040':'#ff000040');
+        tPath.setAttribute('class','clickable');
+        tPath.addEventListener('click',()=>onHitClick(num,3));
         svg.appendChild(tPath);
 
         // Double
-        const dPath = document.createElementNS(svgNS, 'path');
-        dPath.setAttribute('d', describeArc(center, center, doubleOuter, angle1, angle2, doubleInner));
-        dPath.setAttribute('fill', i % 2 === 0 ? '#00ff0080' : '#ff000080');
-        dPath.setAttribute('class', 'clickable');
-        dPath.addEventListener('click', () => onHitClick(num, 2));
+        const dPath = document.createElementNS(svgNS,'path');
+        dPath.setAttribute('d', describeArc(center,center,doubleOuter,angle1,angle2,doubleInner));
+        dPath.setAttribute('fill', i%2===0?'#00ff0080':'#ff000080');
+        dPath.setAttribute('class','clickable');
+        dPath.addEventListener('click',()=>onHitClick(num,2));
         svg.appendChild(dPath);
     });
 
-    // Outer Bull (25)
-    const sb = document.createElementNS(svgNS, 'circle');
-    sb.setAttribute('cx', center);
-    sb.setAttribute('cy', center);
-    sb.setAttribute('r', 12);
-    sb.setAttribute('fill', '#ffff00');
-    sb.setAttribute('class', 'clickable');
-    sb.addEventListener('click', () => onHitClick(25, 1));
+    // Outer Bull
+    const sb = document.createElementNS(svgNS,'circle');
+    sb.setAttribute('cx',center);
+    sb.setAttribute('cy',center);
+    sb.setAttribute('r',12);
+    sb.setAttribute('fill','#ffff00');
+    sb.setAttribute('class','clickable');
+    sb.addEventListener('click',()=>onHitClick(25,1));
     svg.appendChild(sb);
 
-    // Bull (50)
-    const db = document.createElementNS(svgNS, 'circle');
-    db.setAttribute('cx', center);
-    db.setAttribute('cy', center);
-    db.setAttribute('r', 6);
-    db.setAttribute('fill', '#ff0000');
-    db.setAttribute('class', 'clickable');
-    db.addEventListener('click', () => onHitClick(25, 2));
+    // Bull
+    const db = document.createElementNS(svgNS,'circle');
+    db.setAttribute('cx',center);
+    db.setAttribute('cy',center);
+    db.setAttribute('r',6);
+    db.setAttribute('fill','#ff0000');
+    db.setAttribute('class','clickable');
+    db.addEventListener('click',()=>onHitClick(25,2));
     svg.appendChild(db);
 
-    // Draw outer numbers
+    // Outer numbers
     segmentOrder.forEach((num, i) => {
-        const angle = ((i + 0.5) / 20) * 2 * Math.PI - Math.PI/2; // middle of segment
-        const radius = 95; // outside double ring
+        const angle = ((i+0.5)/20)*2*Math.PI - Math.PI/2;
+        const radius = 95;
         const x = center + radius * Math.cos(angle);
         const y = center + radius * Math.sin(angle);
 
-        const text = document.createElementNS(svgNS, 'text');
-        text.setAttribute('x', x);
-        text.setAttribute('y', y);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('dominant-baseline', 'middle');
-        text.setAttribute('fill', '#ffffff');
-        text.setAttribute('font-size', '12');
-        text.setAttribute('font-weight', 'bold');
+        const text = document.createElementNS(svgNS,'text');
+        text.setAttribute('x',x);
+        text.setAttribute('y',y);
+        text.setAttribute('text-anchor','middle');
+        text.setAttribute('dominant-baseline','middle');
+        text.setAttribute('fill','#ffffff');
+        text.setAttribute('font-size','12');
+        text.setAttribute('font-weight','bold');
+        text.setAttribute('transform',`rotate(${angle*180/Math.PI},${x},${y})`);
         text.textContent = num;
 
         svg.appendChild(text);
@@ -134,7 +129,7 @@ function renderBoard() {
     container.appendChild(svg);
 }
 
-// Helper to create a path for a ring segment
+// Arc helper
 function describeArc(cx, cy, rOuter, startAngle, endAngle, rInner) {
     const x1 = cx + rOuter * Math.cos(startAngle);
     const y1 = cy + rOuter * Math.sin(startAngle);
@@ -147,18 +142,21 @@ function describeArc(cx, cy, rOuter, startAngle, endAngle, rInner) {
     return `M${x1},${y1} A${rOuter},${rOuter} 0 0,1 ${x2},${y2} L${x3},${y3} A${rInner},${rInner} 0 0,0 ${x4},${y4} Z`;
 }
 
-// Handle a hit click
-function onHitClick(number, multiplier){
-    const hit = hits.find(h => h.base===number && ((multiplier===1 && !h.isDouble && h.value===number) || (multiplier===2 && h.isDouble && h.value===number*2) || (multiplier===3 && !h.isDouble && h.value===number*3)));
+// Handle hit click
+function onHitClick(number,multiplier){
+    const hit = hits.find(h=>h.base===number && ((multiplier===1 && !h.isDouble && h.value===number) || (multiplier===2 && h.isDouble && h.value===number*2) || (multiplier===3 && !h.isDouble && h.value===number*3)));
     if(!hit) return;
     picks.push(hit);
     checkPick();
 }
 
-// Check current picks against target
+// Check picks
 function checkPick(){
     const sum = picks.reduce((a,b)=>a+b.value,0);
     const info = document.getElementById('info-container');
+    const sumDisplay = document.getElementById('current-sum');
+    sumDisplay.textContent = `${sum} / ${target}`;
+
     if(sum === target){
         if(picks[picks.length-1].isDouble){
             streak++; bestStreak=Math.max(streak,bestStreak);
@@ -170,23 +168,26 @@ function checkPick(){
             info.innerHTML=`❌ Incorrect: last dart not double.`;
         }
         picks=[];
+        sumDisplay.textContent = `0 / ${target}`;
     } else if(sum > target){
         streak=0;
         history.push({target,picks:[...picks],correct:false});
         info.innerHTML=`❌ Busted!`;
         picks=[];
+        sumDisplay.textContent = `0 / ${target}`;
     } else {
         info.innerHTML=`Current sum: ${sum} / Target: ${target}`;
     }
 }
 
-// Reset all data
+// Reset
 function resetStorage(){
     history=[]; streak=0; bestStreak=0;
     document.getElementById('info-container').innerHTML='Data reset';
+    document.getElementById('current-sum').textContent = `0 / ${target}`;
 }
 
-// Initialize app
+// Init
 document.addEventListener('DOMContentLoaded',()=>{
     renderBoard();
     document.getElementById('resetStorage').addEventListener('click',resetStorage);
