@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dartboard Checkout Trainer — Enhanced</title>
+  <style>
+    :root{--bg:#071226;--card:#07182a;--muted:#94a3b8;--accent:#f59e0b}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#071226,#071a2a);color:#e6eef8}
+    .wrap{max-width:1100px;margin:20px auto;padding:18px}
+    .app{display:grid;grid-template-columns:360px 1fr;gap:16px}
+    .card{background:rgba(255,255,255,0.02);padding:14px;border-radius:10px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    h1{font-size:18px;margin:0}
+    .controls{display:flex;gap:8px;margin-left:auto}
+    .btn{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted);cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#f97316);border:none;color:#071026}
+    .target-big{font-size:48px;font-weight:700}
+    .muted{color:var(--muted);font-size:13px}
+
+    .dartboard-wrap{display:flex;gap:18px;align-items:center}
+    .board{width:420px;height:420px}
+    .rightcol{display:flex;flex-direction:column;gap:8px}
+
+    .mult-select{display:flex;gap:6px}
+    .mult-pill{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .mult-pill.active{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25)}
+
+    .darts-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .pill{background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.02)}
+
+    .meta{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .mleft{display:flex;flex-direction:column}
+
+    .history{max-height:160px;overflow:auto;margin-top:8px;padding:8px;background:rgba(255,255,255,0.01);border-radius:6px}
+    .history-item{display:flex;justify-content:space-between;padding:6px;border-bottom:1px dashed rgba(255,255,255,0.02)}
+
+    .modes{display:flex;gap:8px;margin-top:8px}
+    .combo-list{max-height:240px;overflow:auto;margin-top:8px;padding:8px;background:rgba(255,255,255,0.01);border-radius:6px}
+
+    .footer{margin-top:12px;color:var(--muted);font-size:13px}
+
+    @media (max-width:1000px){.app{grid-template-columns:1fr}}    
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Dartboard Checkout Trainer — Enhanced</h1>
+      <div class="controls">
+        <button id="resetStorage" class="btn">Reset Data</button>
+        <button id="downloadData" class="btn">Download Data</button>
+        <button id="uploadData" class="btn">Upload Data</button>
+        <button id="printCombos" class="btn">Print combos</button>
+      </div>
+    </header>
+
+    <div class="app">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+          <div>
+            <div class="muted">Target</div>
+            <div class="target-big" id="targetVal">170</div>
+            <div class="muted">Final dart must be a double (D1..D20 or D25).</div>
+          </div>
+          <div style="text-align:right">
+            <div class="muted">Mode</div>
+            <select id="modeSelect" style="padding:8px;border-radius:8px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.03)">
+              <option value="manual">Manual</option>
+              <option value="countdown">Countdown (random targets)</option>
+              <option value="timed">Timed</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <input id="targetInput" type="number" min="2" max="170" placeholder="enter target" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit">
+          <button id="setBtn" class="btn">Set</button>
+          <button id="randBtn" class="btn">Random</button>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="muted">Multiplier (choose before clicking board)</div>
+          <div class="mult-select" id="multSelect">
+            <div class="mult-pill active" data-mult="1">Single</div>
+            <div class="mult-pill" data-mult="2">Double</div>
+            <div class="mult-pill" data-mult="3">Triple</div>
+            <div class="mult-pill" data-mult="25">Bull(25)</div>
+            <div class="mult-pill" data-mult="50">Bull(50)</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="muted">Your selection (click board slices to add up to 3 darts)</div>
+          <div class="darts-list" id="dartsArea"></div>
+          <div class="muted" id="sumArea">Sum: 0</div>
+
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button id="checkBtn" class="btn primary">Check</button>
+            <button id="clearBtn" class="btn">Clear</button>
+            <button id="undoBtn" class="btn">Undo</button>
+          </div>
+
+          <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+            <div class="muted">Result:</div>
+            <div id="resultText" style="font-weight:700"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="muted">History</div>
+            <div class="muted">Streak: <span id="streak">0</span>  Best: <span id="bestStreak">0</span></div>
+          </div>
+          <div class="history" id="history"></div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="dartboard-wrap">
+              <svg id="dartboard" class="board" viewBox="-210 -210 420 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="dartboard">
+                <!-- We'll draw 20 segments programmatically from JS for accuracy -->
+              </svg>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-left:8px">
+                <div class="muted">Click a slice to add that number with selected multiplier. Click bull for 25/50.</div>
+                <div style="display:flex;gap:6px">
+                  <button id="showCombosBtn" class="btn">Reveal combos</button>
+                  <button id="showAllBtn" class="btn">All checkouts</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div class="muted">Valid combos (up to 3 darts) for current target</div>
+            <div class="muted">Count: <span id="comboCount">0</span></div></div>
+          <div class="combo-list" id="combosList"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div class="muted">Export / Save</div>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button id="exportCSV" class="btn">Export combos CSV</button>
+            <button id="downloadCombos" class="btn">Download combos (JSON)</button>
+            <button id="saveLocal" class="btn">Save progress locally</button>
+            <button id="restoreLocal" class="btn">Restore progress</button>
+          </div>
+          <div style="margin-top:8px;color:var(--muted)">To save to GitHub: export the JSON or CSV and create a Gist or push to a repo (instructions provided in README).</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">This enhanced trainer includes: interactive SVG dartboard, multiplier selector, streaks & history (localStorage), practice modes, printable combos, and export/import tools.</div>
+  </div>
+
+<script>
+// --- Data structures ---
+const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5]; // clockwise starting at top (20)
+const hits = [];
+for (let n=1;n<=20;n++){ hits.push({code:`S${n}`,label:`S ${n}`,value:n,isDouble:false,base:n}); hits.push({code:`D${n}`,label:`D ${n}`,value:2*n,isDouble:true,base:n}); hits.push({code:`T${n}`,label:`T ${n}`,value:3*n,isDouble:false,base:n}); }
+hits.push({code:'SB',label:'S 25',value:25,isDouble:false,base:25}); hits.push({code:'DB',label:'D 25',value:50,isDouble:true,base:25});
+const maxTarget = 170;
+const checkouts = {};
+for (let t=2;t<=maxTarget;t++) checkouts[t]=[];
+// brute force combos (ordered sequences) up to 3 darts, last double
+for (const a of hits){ if (a.value<=maxTarget && a.isDouble) checkouts[a.value].push([a]);
+  for (const b of hits){ const sum2 = a.value + b.value; if (sum2<=maxTarget && b.isDouble) checkouts[sum2].push([a,b]);
+    for (const c of hits){ const sum3 = a.value + b.value + c.value; if (sum3<=maxTarget && c.isDouble) checkouts[sum3].push([a,b,c]); }
+  }
+}
+// dedupe
+for (let t=2;t<=maxTarget;t++){ const seen=new Set(); const unique=[]; for(const seq of checkouts[t]){ const key=seq.map(s=>s.code).join(','); if(!seen.has(key)){seen.add(key); unique.push(seq);} } checkouts[t]=unique; }
+
+// --- UI elements ---
+const dartboard = document.getElementById('dartboard');
+const targetVal = document.getElementById('targetVal');
+const targetInput = document.getElementById('targetInput');
+const setBtn = document.getElementById('setBtn');
+const randBtn = document.getElementById('randBtn');
+const multSelect = document.getElementById('multSelect');
+const dartsArea = document.getElementById('dartsArea');
+const sumArea = document.getElementById('sumArea');
+const checkBtn = document.getElementById('checkBtn');
+const clearBtn = document.getElementById('clearBtn');
+const undoBtn = document.getElementById('undoBtn');
+const resultText = document.getElementById('resultText');
+const combosList = document.getElementById('combosList');
+const comboCount = document.getElementById('comboCount');
+const showCombosBtn = document.getElementById('showCombosBtn');
+const showAllBtn = document.getElementById('showAllBtn');
+const modeSelect = document.getElementById('modeSelect');
+const streakEl = document.getElementById('streak');
+const bestStreakEl = document.getElementById('bestStreak');
+const historyEl = document.getElementById('history');
+
+let target = 170; let picks = []; let currentMult = 1; let mode = 'manual';
+let history = []; let streak = 0; let bestStreak = 0;
+
+// --- persistence ---
+function saveProgress(){ const data = {history,streak,bestStreak}; localStorage.setItem('dart-trainer-v1', JSON.stringify(data)); }
+function restoreProgress(){ const raw = localStorage.getItem('dart-trainer-v1'); if(!raw) return; try{ const d=JSON.parse(raw); history=d.history||[]; streak=d.streak||0; bestStreak=d.bestStreak||0; renderHistory(); updateStreakUI(); }catch(e){console.warn(e);} }
+function resetProgress(){ if(confirm('Reset all saved progress?')){ localStorage.removeItem('dart-trainer-v1'); history=[]; streak=0; bestStreak=0; renderHistory(); updateStreakUI(); alert('Reset done.'); }}
+
+// download / upload
+function downloadJSON(filename, obj){ const blob = new Blob([JSON.stringify(obj, null, 2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url); }
+
+// CSV export for combos
+function exportCombosCSV(){ const arr = (checkouts[target]||[]); const rows = ['sequence,values']; arr.forEach(seq=>{ rows.push(`"${seq.map(s=>s.code).join(' ')}","${seq.map(s=>s.value).join('+')}"`); }); const blob=new Blob([rows.join('
+')],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`combos_${target}.csv`; a.click(); URL.revokeObjectURL(url); }
+
+// --- render dartboard (SVG) ---
+function drawBoard(){ const R=200; const innerBull=20; const bull=40; const tripleR1=120, tripleR2=140; const doubleR1=160, doubleR2=200;
+  // clear
+  while(dartboard.firstChild) dartboard.removeChild(dartboard.firstChild);
+  // background circle
+  const bg = create('circle',{r:R, fill:'#071226', stroke:'rgba(255,255,255,0.02)'}); dartboard.appendChild(bg);
+  // segments
+  const segCount=20; const angleStep = 2*Math.PI/segCount; for(let i=0;i<segCount;i++){ const base = segmentOrder[i]; const angle = -Math.PI/2 + i*angleStep; const nextAngle = angle + angleStep;
+    // draw three rings: single outer, triple, single inner, double outer
+    drawSector(angle,nextAngle, tripleR2, doubleR2, '#0b1220', base, i, 'single-outer');
+    drawSector(angle,nextAngle, tripleR1, tripleR2, '#111827', base, i, 'triple');
+    drawSector(angle,nextAngle, innerBull, tripleR1, '#0b1220', base, i, 'single-inner');
+    drawSector(angle,nextAngle, doubleR1, doubleR2, '#0b1220', base, i, 'double');
+  }
+  // bulls
+  const sb = create('circle',{r:15, fill:'#fff'}); sb.setAttribute('transform','translate(0,0)'); sb.addEventListener('click', ()=>onBoardClick(25, 'SB'));
+  const db = create('circle',{r:8, fill:'#f59e0b'}); db.setAttribute('transform','translate(0,0)'); db.addEventListener('click', ()=>onBoardClick(50, 'DB'));
+  dartboard.appendChild(sb); dartboard.appendChild(db);
+}
+function drawSector(a1,a2,r1,r2,color,base,i,cls){ const path = sectorPath(a1,a2,r1,r2); const p = create('path',{d:path, fill: ( (i%2) ? '#0b1724' : '#071226' ) , stroke:'rgba(255,255,255,0.02)'}); p.dataset.base = base; p.dataset.sector = cls; p.addEventListener('click', ()=>{
+    // determine multiplier by selected currentMult; but if clicked on triple or double area and currentMult is single, prefer area type
+    let mult = currentMult;
+    if (cls==='triple' && currentMult!==2 && currentMult!==50 && currentMult!==25) mult = 3;
+    if (cls==='double' && currentMult!==3 && currentMult!==50 && currentMult!==25) mult = 2;
+    if (cls==='single-outer' || cls==='single-inner') mult = (currentMult===25||currentMult===50)?currentMult:1;
+    if (cls==='single-outer' && currentMult===25) mult=1;
+    // base 25 special handling
+    const code = (mult===50)?'DB':(mult===25)?'SB': (mult===2?('D'+base):(mult===3?('T'+base):('S'+base)));
+    const value = (mult===50)?50: (mult===25?25: base*mult);
+    onBoardClick(value, code, base, mult);
+  }); dartboard.appendChild(p);
+}
+function sectorPath(a1,a2,r1,r2){ const x1 = r1*Math.cos(a1), y1 = r1*Math.sin(a1); const x2 = r1*Math.cos(a2), y2 = r1*Math.sin(a2); const X1 = r2*Math.cos(a1), Y1 = r2*Math.sin(a1); const X2 = r2*Math.cos(a2), Y2 = r2*Math.sin(a2);
+  return `M ${x1} ${y1} L ${X1} ${Y1} A ${r2} ${r2} 0 0 1 ${X2} ${Y2} L ${x2} ${y2} A ${r1} ${r1} 0 0 0 ${x1} ${y1} Z`;
+}
+function create(tag, attrs){ const el = document.createElementNS('http://www.w3.org/2000/svg', tag); for(const k in attrs) el.setAttribute(k, attrs[k]); return el; }
+
+// --- interactions ---
+function onBoardClick(value, code, base, mult){ if (picks.length>=3) { // replace last
+    alert('Max 3 darts. Undo or Clear to change.'); return; }
+  // find hit object in hits list
+  const hit = hits.find(h=>h.code===code) || {code, value, isDouble: code.startsWith('D') || code==='DB', base: base||null};
+  picks.push(hit); renderPicks(); }
+
+function renderPicks(){ dartsArea.innerHTML=''; let sum=0; picks.forEach((p,i)=>{ const el=document.createElement('div'); el.className='pill'; el.textContent = `${i+1}. ${p.code} (${p.value})`; dartsArea.appendChild(el); sum+=p.value; }); sumArea.textContent = `Sum: ${sum}`; resultText.textContent=''; }
+
+document.getElementById('multSelect').addEventListener('click',(e)=>{ const pill = e.target.closest('.mult-pill'); if(!pill) return; document.querySelectorAll('.mult-pill').forEach(p=>p.classList.remove('active')); pill.classList.add('active'); currentMult = parseInt(pill.dataset.mult,10); });
+
+checkBtn.addEventListener('click', ()=>{
+  const sum = picks.reduce((s,p)=>s+(p?p.value:0),0);
+  if(picks.length===0){ resultText.style.color='#ef4444'; resultText.textContent='Pick at least 1 dart.'; return; }
+  if(sum!==target){ resultText.style.color='#ef4444'; resultText.textContent=`No — your darts total ${sum}, target is ${target}.`; recordAttempt(false); return; }
+  const last = picks[picks.length-1]; if(!last.isDouble){ resultText.style.color='#ef4444'; resultText.textContent='No — final dart must be a double.'; recordAttempt(false); return; }
+  // check if this exact sequence exists
+  const targetCombos = checkouts[target]||[]; const found = targetCombos.some(seq=> seq.length===picks.length && seq.every((s,i)=>s.code===picks[i].code)); if(found){ resultText.style.color='#16a34a'; resultText.textContent='Correct — nice finish!'; recordAttempt(true); } else { resultText.style.color='#ef4444'; resultText.textContent='Sums & double ok, but not a standard checkout sequence (ordering differs).'; recordAttempt(false); }
+});
+
+clearBtn.addEventListener('click', ()=>{ picks=[]; renderPicks(); });
+undoBtn.addEventListener('click', ()=>{ picks.pop(); renderPicks(); });
+
+setBtn.addEventListener('click', ()=>{ const v=parseInt(targetInput.value); if(!isNaN(v)){ setTarget(Math.max(2,Math.min(maxTarget,v))); }});
+randBtn.addEventListener('click', ()=> setTarget(Math.floor(Math.random()*(maxTarget-1))+2));
+
+function setTarget(v){ target=v; targetVal.textContent=target; renderCombos(); picks=[]; renderPicks(); }
+
+// combos render
+function renderCombos(){ const arr = checkouts[target]||[]; combosList.innerHTML=''; comboCount.textContent = arr.length; if(arr.length===0){ combosList.innerHTML='<div class="muted">No combos available (up to 3 darts).</div>'; return; } arr.forEach(seq=>{ const div=document.createElement('div'); div.style.padding='6px'; div.style.borderBottom='1px dashed rgba(255,255,255,0.02)'; div.textContent = seq.map(s=>s.code).join(' · ') + '  →  (' + seq.map(s=>s.value).join('+') + ')'; combosList.appendChild(div); }); }
+
+showCombosBtn.addEventListener('click', ()=>{ renderCombos(); window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'}); });
+showAllBtn.addEventListener('click', ()=>{ // show full list for all 2..170
+  const w = window.open('','_blank'); const html = ['<html><head><title>All Checkouts 2-170</title><style>body{font-family:Arial;padding:12px} pre{white-space:pre-wrap}</style></head><body><h1>All checkouts (2..170)</h1>']; for(let t=2;t<=170;t++){ const arr = checkouts[t]||[]; html.push(`<h3>${t} (${arr.length})</h3><pre>${arr.map(s=> s.map(x=>x.code).join(' ') + '  →  ' + s.map(x=>x.value).join('+')).join('
+')}</pre>`); } html.push('</body></html>'); w.document.write(html.join('
+')); w.document.close(); });
+
+// history & streaks
+function recordAttempt(success){ const entry = {ts: Date.now(), target, picks: picks.map(p=>p.code), sum: picks.reduce((s,p)=>s+p.value,0), success}; history.unshift(entry); if(history.length>200) history.pop(); if(success){ streak+=1; bestStreak = Math.max(bestStreak, streak);} else { streak=0; } renderHistory(); updateStreakUI(); saveProgress(); }
+function renderHistory(){ historyEl.innerHTML=''; history.forEach(it=>{ const d = new Date(it.ts); const div = document.createElement('div'); div.className='history-item'; div.innerHTML = `<div>${d.toLocaleString()} — ${it.target} — ${it.picks.join(', ')}</div><div style="color:${it.success? '#16a34a':'#ef4444'}">${it.success? 'OK':'No'}</div>`; historyEl.appendChild(div); }); }
+function updateStreakUI(){ streakEl.textContent = streak; bestStreakEl.textContent = bestStreak; }
+
+// persistence buttons
+document.getElementById('saveLocal').addEventListener('click', ()=>{ saveProgress(); alert('Progress saved to localStorage.'); });
+document.getElementById('restoreLocal').addEventListener('click', ()=>{ restoreProgress(); alert('Progress restored from localStorage (if present).'); });
+
+document.getElementById('resetStorage').addEventListener('click', resetProgress);
+document.getElementById('downloadData').addEventListener('click', ()=>{ downloadJSON('dart-trainer-data.json', {history,streak,bestStreak}); });
+document.getElementById('uploadData').addEventListener('click', ()=>{ const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange = (e)=>{ const f=e.target.files[0]; const reader=new FileReader(); reader.onload = ()=>{ try{ const d=JSON.parse(reader.result); history=d.history||[]; streak=d.streak||0; bestStreak=d.bestStreak||0; renderHistory(); updateStreakUI(); saveProgress(); alert('Data loaded.'); }catch(err){ alert('Invalid file'); } }; reader.readAsText(f); }; inp.click(); });
+
+// export combos
+document.getElementById('exportCSV').addEventListener('click', exportCombosCSV);
+document.getElementById('downloadCombos').addEventListener('click', ()=>{ downloadJSON(`combos_${target}.json`, checkouts[target]||[]); });
+
+// print combos
+document.getElementById('printCombos').addEventListener('click', ()=>{
+  const arr = checkouts[target]||[]; const w=window.open('','_blank'); const html = ['<html><head><title>Combos for '+target+'</title><style>body{font-family:Arial;padding:12px} h1{font-size:18px} ul{columns:2}</style></head><body>']; html.push('<h1>Combos for '+target+' ('+arr.length+')</h1><ul>'); arr.forEach(s=> html.push('<li>'+s.map(x=>x.code).join(' · ')+' → ('+s.map(x=>x.value).join('+')+')</li>')); html.push('</ul></body></html>'); w.document.write(html.join('
+')); w.document.close(); w.print(); });
+
+// download combos as file
+function downloadCombos(){ downloadJSON('combos_'+target+'.json', checkouts[target]||[]); }
+
+// init
+restoreProgress(); drawBoard(); setTarget(170); renderCombos();
+
+// expose for debugging
+window._dartTrainer = {checkouts, hits, history};
+</script>
+</body>
+</html>
