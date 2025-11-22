@@ -1,6 +1,6 @@
-// Dart Checkout Trainer — Fully interactive with highlights, dots, beep
+// Dart Checkout Trainer — fully interactive, corrected segment numbers
 
-// Segment numbers
+// Segment numbers (clockwise, 20 at top)
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 
 // Hits (S, D, T + Bull)
@@ -50,7 +50,7 @@ const dartsDisplay = document.getElementById('darts-display');
 const scoreDisplay = document.getElementById('score-display');
 const historyTable = document.querySelector('#history-table tbody');
 
-// Simple beep using AudioContext
+// Simple beep
 function beep() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = ctx.createOscillator();
@@ -61,7 +61,7 @@ function beep() {
     oscillator.frequency.value = 880; // A5
     oscillator.start();
     gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.1); // 100ms beep
+    oscillator.stop(ctx.currentTime + 0.1);
 }
 
 // Generate new target
@@ -79,6 +79,8 @@ function renderBoard() {
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('viewBox','0 0 200 200');
+    svg.style.width = '200px';  // Correct smaller size
+    svg.style.height = '200px';
 
     const center = 100;
     const tripleInner = 60, tripleOuter = 70;
@@ -86,8 +88,8 @@ function renderBoard() {
     const singleInner = 30, singleOuter = 80;
 
     segmentOrder.forEach((num,i)=>{
-        const angle1 = (i/20)*2*Math.PI - Math.PI/20;
-        const angle2 = ((i+1)/20)*2*Math.PI - Math.PI/20;
+        const angle1 = (i/20)*2*Math.PI - Math.PI/2; // start at top
+        const angle2 = ((i+1)/20)*2*Math.PI - Math.PI/2;
 
         // Single
         const s = document.createElementNS(svgNS,'path');
@@ -128,21 +130,27 @@ function renderBoard() {
     db.addEventListener('click',()=>{ onHit(25,2); highlightSegment(db); beep(); addDot(db); });
     svg.appendChild(db);
 
-    // Numbers
+    // Numbers — aligned upright
     segmentOrder.forEach((num,i)=>{
-        const angle = ((i+0.5)/20)*2*Math.PI - Math.PI/2;
+        const angle = ((i+0.5)/20)*2*Math.PI - Math.PI/2; // middle of segment
         const radius = 95;
         const x = center + radius * Math.cos(angle);
         const y = center + radius * Math.sin(angle);
 
         const text = document.createElementNS(svgNS,'text');
-        text.setAttribute('x',x); text.setAttribute('y',y);
+        text.setAttribute('x',x);
+        text.setAttribute('y',y);
         text.setAttribute('text-anchor','middle');
         text.setAttribute('dominant-baseline','middle');
         text.setAttribute('fill','#ffffff');
         text.setAttribute('font-size','12');
         text.setAttribute('font-weight','bold');
-        text.setAttribute('transform',`rotate(${angle*180/Math.PI},${x},${y})`);
+
+        // Make numbers face outward
+        let deg = angle*180/Math.PI;
+        if(deg > 90 && deg < 270) deg += 180;
+        text.setAttribute('transform',`rotate(${deg},${x},${y})`);
+
         text.textContent = num;
         svg.appendChild(text);
     });
@@ -163,14 +171,14 @@ function describeArc(cx,cy,rOuter,startAngle,endAngle,rInner){
     return `M${x1},${y1} A${rOuter},${rOuter} 0 0,1 ${x2},${y2} L${x3},${y3} A${rInner},${rInner} 0 0,0 ${x4},${y4} Z`;
 }
 
-// Highlight segment briefly
+// Highlight segment
 function highlightSegment(path){
     const original = path.getAttribute('fill');
     path.setAttribute('fill','#ffff00');
     setTimeout(()=>path.setAttribute('fill',original),150);
 }
 
-// Add dot at click
+// Add dot
 function addDot(path){
     const svg = path.ownerSVGElement;
     const bbox = path.getBBox();
