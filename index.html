@@ -1,24 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dartboard Checkout Trainer</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dart Checkout Trainer</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="current-sum" class="sum-display">0 / 170</div>
+  <div class="container">
+    <!-- Left panel -->
+    <div class="panel left-panel">
+      <h2>Target</h2>
+      <div id="target-display">0</div>
+      <button id="generate-target" class="btn">New Target</button>
+      <h2>Score</h2>
+      <div id="score-display">0</div>
+    </div>
 
-  <div class="wrap">
-    <header>
-      <h1>Dartboard Checkout Trainer</h1>
-      <div class="controls">
-        <button id="resetStorage" class="btn">Reset Data</button>
-      </div>
-    </header>
+    <!-- Center: Dartboard -->
+    <div class="panel center-panel">
+      <div id="dartboard-container"></div>
+    </div>
 
-    <div id="dartboard-container" class="card"></div>
-    <div id="info-container" class="card"></div>
+    <!-- Right panel -->
+    <div class="panel right-panel">
+      <h2>Your Darts</h2>
+      <div id="darts-display"></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-container">
+    <h2>History</h2>
+    <table id="history-table">
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Your Hits</th>
+          <th>Correct</th>
+          <th>Standard Out</th>
+          <th>Alternatives</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
   </div>
 
 <script src="app.js"></script>
