@@ -1,86 +1,43 @@
-:root{
---bg:#071226;
---card:#07182a;
---muted:#94a3b8;
---accent:#f59e0b;
+:root {
+--bg: #071226;
+--card: #07182a;
+--muted: #94a3b8;
+--accent: #f59e0b;
 }
-html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#071226,#071a2a);color:#e6eef8}
-.wrap{max-width:1100px;margin:20px auto;padding:18px}
-function renderPicks(){ dartsArea.innerHTML=''; let sum=0; picks.forEach((p,i)=>{ const el=document.createElement('div'); el.className='pill'; el.textContent = `${i+1}. ${p.code} (${p.value})`; dartsArea.appendChild(el); sum+=p.value; }); sumArea.textContent = `Sum: ${sum}`; resultText.textContent=''; }
-
-
-document.getElementById('multSelect').addEventListener('click',(e)=>{ const pill = e.target.closest('.mult-pill'); if(!pill) return; document.querySelectorAll('.mult-pill').forEach(p=>p.classList.remove('active')); pill.classList.add('active'); currentMult = parseInt(pill.dataset.mult,10); });
-
-
-checkBtn.addEventListener('click', ()=>{
-const sum = picks.reduce((s,p)=>s+(p?p.value:0),0);
-if(picks.length===0){ resultText.style.color='#ef4444'; resultText.textContent='Pick at least 1 dart.'; return; }
-if(sum!==target){ resultText.style.color='#ef4444'; resultText.textContent=`No — your darts total ${sum}, target is ${target}.`; recordAttempt(false); return; }
-const last = picks[picks.length-1]; if(!last.isDouble){ resultText.style.color='#ef4444'; resultText.textContent='No — final dart must be a double.'; recordAttempt(false); return; }
-// check if this exact sequence exists
-const targetCombos = checkouts[target]||[]; const found = targetCombos.some(seq=> seq.length===picks.length && seq.every((s,i)=>s.code===picks[i].code)); if(found){ resultText.style.color='#16a34a'; resultText.textContent='Correct — nice finish!'; recordAttempt(true); } else { resultText.style.color='#ef4444'; resultText.textContent='Sums & double ok, but not a standard checkout sequence (ordering differs).'; recordAttempt(false); }
-});
-
-
-clearBtn.addEventListener('click', ()=>{ picks=[]; renderPicks(); });
-undoBtn.addEventListener('click', ()=>{ picks.pop(); renderPicks(); });
-
-
-setBtn.addEventListener('click', ()=>{ const v=parseInt(targetInput.value); if(!isNaN(v)){ setTarget(Math.max(2,Math.min(maxTarget,v))); }});
-randBtn.addEventListener('click', ()=> setTarget(Math.floor(Math.random()*(maxTarget-1))+2));
-
-
-function setTarget(v){ target=v; targetVal.textContent=target; renderCombos(); picks=[]; renderPicks(); }
-
-
-// combos render
-function renderCombos(){ const arr = checkouts[target]||[]; combosList.innerHTML=''; comboCount.textContent = arr.length; if(arr.length===0){ combosList.innerHTML='<div class="muted">No combos available (up to 3 darts).</div>'; return; } arr.forEach(seq=>{ const div=document.createElement('div'); div.style.padding='6px'; div.style.borderBottom='1px dashed rgba(255,255,255,0.02)'; div.textContent = seq.map(s=>s.code).join(' · ') + ' → (' + seq.map(s=>s.value).join('+') + ')'; combosList.appendChild(div); }); }
-
-
-showCombosBtn.addEventListener('click', ()=>{ renderCombos(); window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'}); });
-showAllBtn.addEventListener('click', ()=>{ // show full list for all 2..170
-const w = window.open('','_blank'); const html = ['<html><head><title>All Checkouts 2-170</title><style>body{font-family:Arial;padding:12px} pre{white-space:pre-wrap}</style></head><body><h1>All checkouts (2..170)</h1>']; for(let t=2;t<=170;t++){ const arr = checkouts[t]||[]; html.push(`<h3>${t} (${arr.length})</h3><pre>${arr.map(s=> s.map(x=>x.code).join(' ') + ' → ' + s.map(x=>x.value).join('+')).join('
-')}</pre>`); } html.push('</body></html>'); w.document.write(html.join('
-')); w.document.close(); });
-
-
-// history & streaks
-function recordAttempt(success){ const entry = {ts: Date.now(), target, picks: picks.map(p=>p.code), sum: picks.reduce((s,p)=>s+p.value,0), success}; history.unshift(entry); if(history.length>200) history.pop(); if(success){ streak+=1; bestStreak = Math.max(bestStreak, streak);} else { streak=0; } renderHistory(); updateStreakUI(); saveProgress(); }
-function renderHistory(){ historyEl.innerHTML=''; history.forEach(it=>{ const d = new Date(it.ts); const div = document.createElement('div'); div.className='history-item'; div.innerHTML = `<div>${d.toLocaleString()} — ${it.target} — ${it.picks.join(', ')}</div><div style="color:${it.success? '#16a34a':'#ef4444'}">${it.success? 'OK':'No'}</div>`; historyEl.appendChild(div); }); }
-function updateStreakUI(){ streakEl.textContent = streak; bestStreakEl.textContent = bestStreak; }
-
-
-// persistence buttons
-document.getElementById('saveLocal').addEventListener('click', ()=>{ saveProgress(); alert('Progress saved to localStorage.'); });
-document.getElementById('restoreLocal').addEventListener('click', ()=>{ restoreProgress(); alert('Progress restored from localStorage (if present).'); });
-
-
-document.getElementById('resetStorage').addEventListener('click', resetProgress);
-document.getElementById('downloadData').addEventListener('click', ()=>{ downloadJSON('dart-trainer-data.json', {history,streak,bestStreak}); });
-document.getElementById('uploadData').addEventListener('click', ()=>{ const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange = (e)=>{ const f=e.target.files[0]; const reader=new FileReader(); reader.onload = ()=>{ try{ const d=JSON.parse(reader.result); history=d.history||[]; streak=d.streak||0; bestStreak=d.bestStreak||0; renderHistory(); updateStreakUI(); saveProgress(); alert('Data loaded.'); }catch(err){ alert('Invalid file'); } }; reader.readAsText(f); }; inp.click(); });
-
-
-// export combos
-document.getElementById('exportCSV').addEventListener('click', exportCombosCSV);
-document.getElementById('downloadCombos').addEventListener('click', ()=>{ downloadJSON(`combos_${target}.json`, checkouts[target]||[]); });
-
-
-// print combos
-document.getElementById('printCombos').addEventListener('click', ()=>{
-const arr = checkouts[target]||[]; const w=window.open('','_blank'); const html = ['<html><head><title>Combos for '+target+'</title><style>body{font-family:Arial;padding:12px} h1{font-size:18px} ul{columns:2}</style></head><body>']; html.push('<h1>Combos for '+target+' ('+arr.length+')</h1><ul>'); arr.forEach(s=> html.push('<li>'+s.map(x=>x.code).join(' · ')+' → ('+s.map(x=>x.value).join('+')+')</li>')); html.push('</ul></body></html>'); w.document.write(html.join('
-')); w.document.close(); w.print(); });
-
-
-// download combos as file
-function downloadCombos(){ downloadJSON('combos_'+target+'.json', checkouts[target]||[]); }
-
-
-// init
-restoreProgress(); drawBoard(); setTarget(170); renderCombos();
-
-
-// expose for debugging
-window._dartTrainer = {checkouts, hits, history};
-</script>
-</body>
-</html>
+html, body {
+height: 100%;
+margin: 0;
+font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+background: linear-gradient(180deg, #071226, #071a2a);
+color: #e6eef8;
+}
+.wrap {
+max-width: 1100px;
+margin: 20px auto;
+padding: 18px;
+}
+header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 12px;
+}
+.btn {
+padding: 8px 10px;
+border-radius: 8px;
+border: 1px solid rgba(255, 255, 255, 0.03);
+background: transparent;
+color: var(--muted);
+cursor: pointer;
+margin-right: 4px;
+}
+.card {
+background: rgba(255,255,255,0.02);
+padding: 14px;
+border-radius: 10px;
+margin-top: 12px;
+}
+#dartboard-container svg { width: 100%; max-width: 600px; display:block; margin:0 auto; }
+#info-container { font-size: 14px; line-height: 1.5; }
+.clickable { cursor: pointer; transition: transform 0.1s; }
+.clickable:hover { transform: scale(1.05); }
