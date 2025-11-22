@@ -1,53 +1,37 @@
-:root {
-  --bg: #071226;
-  --card: #07182a;
-  --muted: #94a3b8;
-  --accent: #f59e0b;
-}
-
-html, body {
-  height: 100%;
+body {
   margin: 0;
-  font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
-  background: linear-gradient(180deg, #071226, #071a2a);
+  font-family: Arial, sans-serif;
+  background: #071226;
   color: #e6eef8;
 }
 
-.wrap {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 18px;
-}
-
-header {
+.container {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  padding: 20px;
 }
 
-.btn {
-  padding: 8px 10px;
+/* Panels */
+.panel {
+  padding: 10px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  margin-right: 4px;
 }
 
-.card {
-  background: rgba(255,255,255,0.02);
-  padding: 14px;
-  border-radius: 10px;
-  margin-top: 12px;
+.left-panel, .right-panel {
+  width: 150px;
 }
 
-/* Dartboard container */
+.center-panel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Dartboard */
 #dartboard-container {
   width: 400px;
   height: 400px;
-  margin: 0 auto;
 }
 
 #dartboard-container svg {
@@ -63,24 +47,43 @@ header {
   transform: scale(1.05);
 }
 
-/* Current sum at top right */
-.sum-display {
-  position: fixed;
-  top: 10px;
-  right: 20px;
-  font-size: 18px;
+/* Buttons */
+.btn {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #f59e0b;
+  color: #071226;
   font-weight: bold;
-  color: #f59e0b;
-  background: rgba(0,0,0,0.3);
-  padding: 6px 10px;
-  border-radius: 8px;
-  z-index: 100;
+  cursor: pointer;
 }
 
-/* Responsive for smaller screens */
-@media (max-width: 500px) {
-  #dartboard-container {
-    width: 300px;
-    height: 300px;
-  }
+/* Darts display */
+#darts-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* History Table */
+.history-container {
+  margin: 20px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #94a3b8;
+  padding: 4px 6px;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background: #07182a;
 }
