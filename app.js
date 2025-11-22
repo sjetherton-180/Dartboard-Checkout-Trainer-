@@ -171,6 +171,11 @@ function onHit(number,multiplier){
 
     if(picks.length>=3 || totalPicks()>=target){
         validateCheckout();
+function highlightSegment(path) {
+    const original = path.getAttribute('fill');
+    path.setAttribute('fill','#ffff00'); // yellow flash
+    setTimeout(()=>path.setAttribute('fill',original),150);
+}
     }
 }
 
