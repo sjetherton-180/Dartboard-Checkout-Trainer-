@@ -50,7 +50,7 @@ function renderBoard() {
     container.innerHTML = '';
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 200 200');
+    svg.setAttribute('viewBox', '0 0 400 400');
 
     const center = 100;
     const outerRadius = 90;
