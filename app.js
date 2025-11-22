@@ -1,4 +1,4 @@
-// Dart Checkout Trainer — fully interactive, corrected segment numbers
+// Dart Checkout Trainer — fully interactive with 2 alternative outs
 
 // Segment numbers (clockwise, 20 at top)
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
@@ -79,7 +79,7 @@ function renderBoard() {
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('viewBox','0 0 200 200');
-    svg.style.width = '200px';  // Correct smaller size
+    svg.style.width = '200px';
     svg.style.height = '200px';
 
     const center = 100;
@@ -88,7 +88,7 @@ function renderBoard() {
     const singleInner = 30, singleOuter = 80;
 
     segmentOrder.forEach((num,i)=>{
-        const angle1 = (i/20)*2*Math.PI - Math.PI/2; // start at top
+        const angle1 = (i/20)*2*Math.PI - Math.PI/2;
         const angle2 = ((i+1)/20)*2*Math.PI - Math.PI/2;
 
         // Single
@@ -130,9 +130,9 @@ function renderBoard() {
     db.addEventListener('click',()=>{ onHit(25,2); highlightSegment(db); beep(); addDot(db); });
     svg.appendChild(db);
 
-    // Numbers — aligned upright
+    // Numbers — upright
     segmentOrder.forEach((num,i)=>{
-        const angle = ((i+0.5)/20)*2*Math.PI - Math.PI/2; // middle of segment
+        const angle = ((i+0.5)/20)*2*Math.PI - Math.PI/2;
         const radius = 95;
         const x = center + radius * Math.cos(angle);
         const y = center + radius * Math.sin(angle);
@@ -217,7 +217,7 @@ function validateCheckout(){
     let correct = false;
     let standardOuts = checkouts[target] || [];
     let standard = standardOuts.length>0 ? standardOuts[0].map(h=>h.code).join(', ') : '';
-    let alternatives = standardOuts.slice(1).map(s=>s.map(h=>h.code).join(', ')).join(' | ');
+    let alternatives = standardOuts.slice(1,3).map(s=>s.map(h=>h.code).join(', ')).join(' | '); // only 2 alternatives
 
     if(sum===target && picks[picks.length-1]?.isDouble){
         score++; correct=true;
