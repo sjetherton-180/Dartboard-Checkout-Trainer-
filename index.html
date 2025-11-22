@@ -1,29 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dartboard Checkout Trainer</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dartboard Checkout Trainer</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="wrap">
-<header>
-<h1>Dartboard Checkout Trainer</h1>
-<div class="controls">
-<button id="resetStorage" class="btn">Reset Data</button>
-<button id="downloadData" class="btn">Download Data</button>
-<button id="uploadData" class="btn">Upload Data</button>
-<button id="printCombos" class="btn">Print Combos</button>
-</div>
-</header>
+  <div id="current-sum" class="sum-display">0 / 170</div>
 
-  
-<div id="dartboard-container" class="card"></div>
-<div id="info-container" class="card"></div>
-</div>
-<input type="file" id="uploadFile" style="display:none" />
+  <div class="wrap">
+    <header>
+      <h1>Dartboard Checkout Trainer</h1>
+      <div class="controls">
+        <button id="resetStorage" class="btn">Reset Data</button>
+      </div>
+    </header>
+
+    <div id="dartboard-container" class="card"></div>
+    <div id="info-container" class="card"></div>
+  </div>
+
 <script src="app.js"></script>
 </body>
-  <div id="current-sum" class="sum-display">0 / 170</div>
 </html>
