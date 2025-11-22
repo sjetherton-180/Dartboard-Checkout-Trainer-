@@ -61,7 +61,9 @@ function createDartboard() {
 
   const size = 600; // 2× bigger
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 400 400");
+
+  // Expand viewBox to fit outer numbers
+  svg.setAttribute("viewBox", "-20 -20 440 440");
   svg.setAttribute("width", size);
   svg.setAttribute("height", size);
 
@@ -84,7 +86,7 @@ function createDartboard() {
     const a1 = centerAngle - segmentAngle / 2;
     const a2 = centerAngle + segmentAngle / 2;
 
-    // Single area
+    // Single
     const s = document.createElementNS("http://www.w3.org/2000/svg", "path");
     s.setAttribute("d", describeArc(cx, cy, singleOuter, a1, a2, singleInner));
     s.setAttribute("fill", i % 2 === 0 ? "#e7e7e7" : "#cfcfcf");
@@ -195,6 +197,7 @@ function resetRound() {
   newTarget();
 }
 
+// Placeholder alternatives — replace with real checkout logic
 function getAlternatives(score) {
   return ["T20 T20 D25", "T19 T14 D20"];
 }
