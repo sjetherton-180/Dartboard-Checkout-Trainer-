@@ -168,6 +168,13 @@ function onHit(number,multiplier){
     if(!hit) return;
     picks.push(hit);
     updateDartsDisplay();
+    
+    s.addEventListener('click',()=>{ onHit(num,1); highlightSegment(s); beep(); addDot(s); });
+t.addEventListener('click',()=>{ onHit(num,3); highlightSegment(t); beep(); addDot(t); });
+d.addEventListener('click',()=>{ onHit(num,2); highlightSegment(d); beep(); addDot(d); });
+sb.addEventListener('click',()=>{ onHit(25,1); highlightSegment(sb); beep(); addDot(sb); });
+db.addEventListener('click',()=>{ onHit(25,2); highlightSegment(db); beep(); addDot(db); });
+
 
     if(picks.length>=3 || totalPicks()>=target){
         validateCheckout();
