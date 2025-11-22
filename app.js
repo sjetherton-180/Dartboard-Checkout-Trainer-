@@ -1,18 +1,4 @@
-// Dart Checkout Trainer
-
-// Simple beep using AudioContext
-function beep() {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 880; // A5
-    oscillator.start();
-    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.1); // 100ms beep
-}
+// Dart Checkout Trainer — Fully interactive with highlights, dots, beep
 
 // Segment numbers
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
@@ -64,6 +50,20 @@ const dartsDisplay = document.getElementById('darts-display');
 const scoreDisplay = document.getElementById('score-display');
 const historyTable = document.querySelector('#history-table tbody');
 
+// Simple beep using AudioContext
+function beep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880; // A5
+    oscillator.start();
+    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.1); // 100ms beep
+}
+
 // Generate new target
 document.getElementById('generate-target').addEventListener('click', () => {
     target = Math.floor(Math.random()*169)+2;
@@ -94,7 +94,7 @@ function renderBoard() {
         s.setAttribute('d',describeArc(center,center,singleOuter,angle1,angle2,singleInner));
         s.setAttribute('fill',i%2===0?'#ffffff20':'#00000020');
         s.setAttribute('class','clickable');
-        s.addEventListener('click',()=>onHit(num,1));
+        s.addEventListener('click',()=>{ onHit(num,1); highlightSegment(s); beep(); addDot(s); });
         svg.appendChild(s);
 
         // Triple
@@ -102,7 +102,7 @@ function renderBoard() {
         t.setAttribute('d',describeArc(center,center,tripleOuter,angle1,angle2,tripleInner));
         t.setAttribute('fill',i%2===0?'#00ff0040':'#ff000040');
         t.setAttribute('class','clickable');
-        t.addEventListener('click',()=>onHit(num,3));
+        t.addEventListener('click',()=>{ onHit(num,3); highlightSegment(t); beep(); addDot(t); });
         svg.appendChild(t);
 
         // Double
@@ -110,7 +110,7 @@ function renderBoard() {
         d.setAttribute('d',describeArc(center,center,doubleOuter,angle1,angle2,doubleInner));
         d.setAttribute('fill',i%2===0?'#00ff0080':'#ff000080');
         d.setAttribute('class','clickable');
-        d.addEventListener('click',()=>onHit(num,2));
+        d.addEventListener('click',()=>{ onHit(num,2); highlightSegment(d); beep(); addDot(d); });
         svg.appendChild(d);
     });
 
@@ -118,14 +118,14 @@ function renderBoard() {
     const sb = document.createElementNS(svgNS,'circle');
     sb.setAttribute('cx',center); sb.setAttribute('cy',center); sb.setAttribute('r',12);
     sb.setAttribute('fill','#ffff00'); sb.setAttribute('class','clickable');
-    sb.addEventListener('click',()=>onHit(25,1));
+    sb.addEventListener('click',()=>{ onHit(25,1); highlightSegment(sb); beep(); addDot(sb); });
     svg.appendChild(sb);
 
     // Bull
     const db = document.createElementNS(svgNS,'circle');
     db.setAttribute('cx',center); db.setAttribute('cy',center); db.setAttribute('r',6);
     db.setAttribute('fill','#ff0000'); db.setAttribute('class','clickable');
-    db.addEventListener('click',()=>onHit(25,2));
+    db.addEventListener('click',()=>{ onHit(25,2); highlightSegment(db); beep(); addDot(db); });
     svg.appendChild(db);
 
     // Numbers
@@ -150,6 +150,7 @@ function renderBoard() {
     container.appendChild(svg);
 }
 
+// Arc helper
 function describeArc(cx,cy,rOuter,startAngle,endAngle,rInner){
     const x1=cx+rOuter*Math.cos(startAngle);
     const y1=cy+rOuter*Math.sin(startAngle);
@@ -162,36 +163,47 @@ function describeArc(cx,cy,rOuter,startAngle,endAngle,rInner){
     return `M${x1},${y1} A${rOuter},${rOuter} 0 0,1 ${x2},${y2} L${x3},${y3} A${rInner},${rInner} 0 0,0 ${x4},${y4} Z`;
 }
 
+// Highlight segment briefly
+function highlightSegment(path){
+    const original = path.getAttribute('fill');
+    path.setAttribute('fill','#ffff00');
+    setTimeout(()=>path.setAttribute('fill',original),150);
+}
+
+// Add dot at click
+function addDot(path){
+    const svg = path.ownerSVGElement;
+    const bbox = path.getBBox();
+    const cx = bbox.x + bbox.width/2;
+    const cy = bbox.y + bbox.height/2;
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',cx); dot.setAttribute('cy',cy);
+    dot.setAttribute('r',2); dot.setAttribute('fill','#ff0');
+    svg.appendChild(dot);
+    setTimeout(()=>svg.removeChild(dot),2000);
+}
+
 // Handle hit
 function onHit(number,multiplier){
     const hit = hits.find(h=>h.base===number && ((multiplier===1 && !h.isDouble && h.value===number) || (multiplier===2 && h.isDouble && h.value===number*2) || (multiplier===3 && !h.isDouble && h.value===number*3)));
     if(!hit) return;
     picks.push(hit);
     updateDartsDisplay();
-    
-    s.addEventListener('click',()=>{ onHit(num,1); highlightSegment(s); beep(); addDot(s); });
-t.addEventListener('click',()=>{ onHit(num,3); highlightSegment(t); beep(); addDot(t); });
-d.addEventListener('click',()=>{ onHit(num,2); highlightSegment(d); beep(); addDot(d); });
-sb.addEventListener('click',()=>{ onHit(25,1); highlightSegment(sb); beep(); addDot(sb); });
-db.addEventListener('click',()=>{ onHit(25,2); highlightSegment(db); beep(); addDot(db); });
-
 
     if(picks.length>=3 || totalPicks()>=target){
         validateCheckout();
-function highlightSegment(path) {
-    const original = path.getAttribute('fill');
-    path.setAttribute('fill','#ffff00'); // yellow flash
-    setTimeout(()=>path.setAttribute('fill',original),150);
-}
     }
 }
 
-function totalPicks(){ return picks.reduce((a,b)=>a+b.value,0); }
-
+// Update darts display
 function updateDartsDisplay(){
     dartsDisplay.innerHTML = picks.map(p=>p.code).join(', ');
 }
 
+// Total of picks
+function totalPicks(){ return picks.reduce((a,b)=>a+b.value,0); }
+
+// Validate checkout
 function validateCheckout(){
     const sum = totalPicks();
     let correct = false;
@@ -199,7 +211,7 @@ function validateCheckout(){
     let standard = standardOuts.length>0 ? standardOuts[0].map(h=>h.code).join(', ') : '';
     let alternatives = standardOuts.slice(1).map(s=>s.map(h=>h.code).join(', ')).join(' | ');
 
-    if(sum===target && picks[picks.length-1].isDouble){
+    if(sum===target && picks[picks.length-1]?.isDouble){
         score++; correct=true;
     } else {
         score--; correct=false;
