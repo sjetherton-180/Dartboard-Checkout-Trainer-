@@ -37,7 +37,7 @@ padding: 14px;
 border-radius: 10px;
 margin-top: 12px;
 }
-#dartboard-container svg { width: 400%; max-width: 600px; display:block; margin:0 auto; }
+#dartboard-container svg { width: 600%; max-width: 600px; display:block; margin:0 auto; }
 #info-container { font-size: 14px; line-height: 1.5; }
 .clickable { cursor: pointer; transition: transform 0.1s; }
 .clickable:hover { transform: scale(1.05); }
