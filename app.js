@@ -1,6 +1,6 @@
-// Dartboard Checkout Trainer — Full Working App
+// Dartboard Checkout Trainer — Fully working with outer number ring
 
-// Dartboard segments and hit definitions
+// Segment numbers and hit definitions
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 const hits = [];
 for (let n = 1; n <= 20; n++) {
@@ -11,7 +11,7 @@ for (let n = 1; n <= 20; n++) {
 hits.push({code:'SB',label:'S 25',value:25,isDouble:false,base:25});
 hits.push({code:'DB',label:'D 25',value:50,isDouble:true,base:25});
 
-// Generate all 3-dart checkouts from 170 → 2
+// Generate all 3-dart checkouts
 const maxTarget = 170;
 const checkouts = {};
 for(let t=2;t<=maxTarget;t++) checkouts[t]=[];
@@ -50,7 +50,7 @@ function renderBoard() {
     container.innerHTML = '';
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 400 400');
+    svg.setAttribute('viewBox', '0 0 200 200');
 
     const center = 100;
     const outerRadius = 90;
@@ -110,6 +110,26 @@ function renderBoard() {
     db.setAttribute('class', 'clickable');
     db.addEventListener('click', () => onHitClick(25, 2));
     svg.appendChild(db);
+
+    // Draw outer numbers
+    segmentOrder.forEach((num, i) => {
+        const angle = ((i + 0.5) / 20) * 2 * Math.PI - Math.PI/2; // middle of segment
+        const radius = 95; // outside double ring
+        const x = center + radius * Math.cos(angle);
+        const y = center + radius * Math.sin(angle);
+
+        const text = document.createElementNS(svgNS, 'text');
+        text.setAttribute('x', x);
+        text.setAttribute('y', y);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.setAttribute('fill', '#ffffff');
+        text.setAttribute('font-size', '12');
+        text.setAttribute('font-weight', 'bold');
+        text.textContent = num;
+
+        svg.appendChild(text);
+    });
 
     container.appendChild(svg);
 }
