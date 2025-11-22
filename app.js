@@ -1,9 +1,9 @@
-// Dart Checkout Trainer — fully interactive with 2 alternative outs
+// Dart Checkout Trainer — Standard Dartboard
 
-// Segment numbers (clockwise, 20 at top)
+// Segment numbers clockwise (20 at top)
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 
-// Hits (S, D, T + Bull)
+// Hits
 const hits = [];
 for (let n = 1; n <= 20; n++) {
     hits.push({code:`S${n}`,label:`S ${n}`,value:n,isDouble:false,base:n});
@@ -13,7 +13,7 @@ for (let n = 1; n <= 20; n++) {
 hits.push({code:'SB',label:'S25',value:25,isDouble:false,base:25});
 hits.push({code:'DB',label:'D25',value:50,isDouble:true,base:25});
 
-// Standard 3-dart checkout table
+// Generate checkout table
 const maxTarget = 170;
 const checkouts = {};
 for(let t=2;t<=maxTarget;t++) checkouts[t]=[];
@@ -50,18 +50,15 @@ const dartsDisplay = document.getElementById('darts-display');
 const scoreDisplay = document.getElementById('score-display');
 const historyTable = document.querySelector('#history-table tbody');
 
-// Simple beep
+// Beep sound
 function beep() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 880; // A5
-    oscillator.start();
-    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.1);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 880;
+    osc.start(); gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.1);
 }
 
 // Generate new target
@@ -77,19 +74,28 @@ function renderBoard() {
     const container = document.getElementById('dartboard-container');
     container.innerHTML = '';
     const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg');
+    const svg = document.createElementNS(svgNS,'svg');
     svg.setAttribute('viewBox','0 0 200 200');
     svg.style.width = '200px';
     svg.style.height = '200px';
 
     const center = 100;
-    const tripleInner = 60, tripleOuter = 70;
-    const doubleInner = 80, doubleOuter = 90;
-    const singleInner = 30, singleOuter = 80;
+    // Radii based on standard proportions
+    const bullInner = 6;
+    const bullOuter = 12;
+    const tripleInner = 60;
+    const tripleOuter = 70;
+    const doubleInner = 80;
+    const doubleOuter = 90;
+    const singleInner = 30;
+    const singleOuter = 80;
+
+    const segmentCount = 20;
+    const segmentAngle = 2*Math.PI/segmentCount;
 
     segmentOrder.forEach((num,i)=>{
-        const angle1 = (i/20)*2*Math.PI - Math.PI/2;
-        const angle2 = ((i+1)/20)*2*Math.PI - Math.PI/2;
+        const angle1 = i*segmentAngle - Math.PI/2;
+        const angle2 = (i+1)*segmentAngle - Math.PI/2;
 
         // Single
         const s = document.createElementNS(svgNS,'path');
@@ -116,39 +122,33 @@ function renderBoard() {
         svg.appendChild(d);
     });
 
-    // Outer Bull
+    // Bulls
     const sb = document.createElementNS(svgNS,'circle');
-    sb.setAttribute('cx',center); sb.setAttribute('cy',center); sb.setAttribute('r',12);
+    sb.setAttribute('cx',center); sb.setAttribute('cy',center); sb.setAttribute('r',bullOuter);
     sb.setAttribute('fill','#ffff00'); sb.setAttribute('class','clickable');
     sb.addEventListener('click',()=>{ onHit(25,1); highlightSegment(sb); beep(); addDot(sb); });
     svg.appendChild(sb);
 
-    // Bull
     const db = document.createElementNS(svgNS,'circle');
-    db.setAttribute('cx',center); db.setAttribute('cy',center); db.setAttribute('r',6);
+    db.setAttribute('cx',center); db.setAttribute('cy',center); db.setAttribute('r',bullInner);
     db.setAttribute('fill','#ff0000'); db.setAttribute('class','clickable');
     db.addEventListener('click',()=>{ onHit(25,2); highlightSegment(db); beep(); addDot(db); });
     svg.appendChild(db);
 
-    // Numbers — upright
+    // Numbers
     segmentOrder.forEach((num,i)=>{
-        const angle = ((i+0.5)/20)*2*Math.PI - Math.PI/2;
-        const radius = 95;
-        const x = center + radius * Math.cos(angle);
-        const y = center + radius * Math.sin(angle);
+        const angle = (i+0.5)*segmentAngle - Math.PI/2;
+        const radius = doubleOuter+10;
+        const x = center + radius*Math.cos(angle);
+        const y = center + radius*Math.sin(angle);
 
         const text = document.createElementNS(svgNS,'text');
-        text.setAttribute('x',x);
-        text.setAttribute('y',y);
-        text.setAttribute('text-anchor','middle');
-        text.setAttribute('dominant-baseline','middle');
-        text.setAttribute('fill','#ffffff');
-        text.setAttribute('font-size','12');
-        text.setAttribute('font-weight','bold');
+        text.setAttribute('x',x); text.setAttribute('y',y);
+        text.setAttribute('text-anchor','middle'); text.setAttribute('dominant-baseline','middle');
+        text.setAttribute('fill','#ffffff'); text.setAttribute('font-size','12'); text.setAttribute('font-weight','bold');
 
-        // Make numbers face outward
         let deg = angle*180/Math.PI;
-        if(deg > 90 && deg < 270) deg += 180;
+        if(deg>90 && deg<270) deg += 180;
         text.setAttribute('transform',`rotate(${deg},${x},${y})`);
 
         text.textContent = num;
@@ -171,19 +171,19 @@ function describeArc(cx,cy,rOuter,startAngle,endAngle,rInner){
     return `M${x1},${y1} A${rOuter},${rOuter} 0 0,1 ${x2},${y2} L${x3},${y3} A${rInner},${rInner} 0 0,0 ${x4},${y4} Z`;
 }
 
-// Highlight segment
+// Highlight
 function highlightSegment(path){
     const original = path.getAttribute('fill');
     path.setAttribute('fill','#ffff00');
     setTimeout(()=>path.setAttribute('fill',original),150);
 }
 
-// Add dot
+// Dot
 function addDot(path){
     const svg = path.ownerSVGElement;
     const bbox = path.getBBox();
-    const cx = bbox.x + bbox.width/2;
-    const cy = bbox.y + bbox.height/2;
+    const cx = bbox.x+bbox.width/2;
+    const cy = bbox.y+bbox.height/2;
     const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
     dot.setAttribute('cx',cx); dot.setAttribute('cy',cy);
     dot.setAttribute('r',2); dot.setAttribute('fill','#ff0');
@@ -203,34 +203,25 @@ function onHit(number,multiplier){
     }
 }
 
-// Update darts display
-function updateDartsDisplay(){
-    dartsDisplay.innerHTML = picks.map(p=>p.code).join(', ');
-}
-
-// Total of picks
+function updateDartsDisplay(){ dartsDisplay.innerHTML = picks.map(h=>h.code).join(', '); }
 function totalPicks(){ return picks.reduce((a,b)=>a+b.value,0); }
 
-// Validate checkout
 function validateCheckout(){
     const sum = totalPicks();
-    let correct = false;
-    let standardOuts = checkouts[target] || [];
-    let standard = standardOuts.length>0 ? standardOuts[0].map(h=>h.code).join(', ') : '';
-    let alternatives = standardOuts.slice(1,3).map(s=>s.map(h=>h.code).join(', ')).join(' | '); // only 2 alternatives
+    let correct=false;
+    const standardOuts = checkouts[target] || [];
+    const standard = standardOuts.length>0 ? standardOuts[0].map(h=>h.code).join(', ') : '';
+    const alternatives = standardOuts.slice(1,3).map(s=>s.map(h=>h.code).join(', ')).join(' | ');
 
-    if(sum===target && picks[picks.length-1]?.isDouble){
-        score++; correct=true;
-    } else {
-        score--; correct=false;
-    }
+    if(sum===target && picks[picks.length-1]?.isDouble){ score++; correct=true; }
+    else score--;
 
     scoreDisplay.textContent = score;
 
     history.unshift({
         target: target,
         userHits: picks.map(h=>h.code).join(', '),
-        correct: correct ? 'Yes':'No',
+        correct: correct?'Yes':'No',
         standardOut: standard,
         alternatives: alternatives
     });
@@ -240,13 +231,12 @@ function validateCheckout(){
     updateDartsDisplay();
 }
 
-// Update history table
 function updateHistoryTable(){
     historyTable.innerHTML = '';
     history.forEach(item=>{
-        const row = document.createElement('tr');
+        const row=document.createElement('tr');
         ['target','userHits','correct','standardOut','alternatives'].forEach(key=>{
-            const td = document.createElement('td'); td.textContent = item[key]; row.appendChild(td);
+            const td=document.createElement('td'); td.textContent=item[key]; row.appendChild(td);
         });
         historyTable.appendChild(row);
     });
