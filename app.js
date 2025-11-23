@@ -1,5 +1,5 @@
 // ------------------------------
-// Dartboard + Checkout Trainer — Animated Dart Markers + Highlight
+// Dartboard + Checkout Trainer — Mute, Bulls, No Alternatives, Total Column
 // ------------------------------
 
 const segmentOrder = [
@@ -10,8 +10,7 @@ const segmentOrder = [
 let targetScore = 0;
 let darts = [];
 let score = 0;
-let soundOn = true;
-let dartMarkers = [];
+let soundOn = true; // Mute toggle
 
 // --- Precompute hits ---
 const hits = [];
@@ -23,7 +22,7 @@ for (let n = 1; n <= 20; n++) {
 hits.push({ code: 'SB', value: 25, isDouble: false, base: 25 });
 hits.push({ code: 'DB', value: 50, isDouble: true, base: 25 });
 
-// --- Generate 3-dart checkouts ---
+// --- Generate all 3-dart checkouts ---
 const MAX_TARGET = 170;
 const checkouts = {};
 for (let t = 2; t <= MAX_TARGET; t++) checkouts[t] = [];
@@ -106,8 +105,10 @@ function createDartboard() {
   const doubleInner = 150;
   const doubleOuter = 185;
 
+  // Bulls increased proportionally
   const bullOuter = 20;
   const bullInner = 10;
+
   const segmentAngle = 2 * Math.PI / 20;
 
   segmentOrder.forEach((num, i) => {
@@ -115,50 +116,59 @@ function createDartboard() {
     const a1 = centerAngle - segmentAngle / 2;
     const a2 = centerAngle + segmentAngle / 2;
 
-    const highlightSegment = (el) => {
-      const orig = el.getAttribute("fill");
-      el.setAttribute("fill", "#ffff99");
-      setTimeout(() => el.setAttribute("fill", orig), 200);
-    };
-
-    const addSegment = (rOuter, rInner, fill, mult, ringType) => {
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", describeArc(cx, cy, rOuter, a1, a2, rInner));
-      path.setAttribute("fill", fill);
-      path.style.cursor = "pointer";
-      path.addEventListener("click", () => {
-        highlightSegment(path);
-        hitSegment(num, mult, {cx, cy, angle: centerAngle, ring: ringType});
-      });
-      svg.appendChild(path);
-    };
-
     // Single Outer
-    addSegment(singleOuter, tripleOuter, i % 2 === 0 ? "#eee" : "#ccc", 1, 'S');
+    const pathS = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathS.setAttribute("d", describeArc(cx, cy, singleOuter, a1, a2, tripleOuter));
+    pathS.setAttribute("fill", i % 2 === 0 ? "#eee" : "#ccc");
+    pathS.style.cursor = "pointer";
+    pathS.addEventListener("click", () => hitSegment(num, 1));
+    svg.appendChild(pathS);
+
     // Triple
-    addSegment(tripleOuter, tripleInner, i % 2 === 0 ? "#ff6666" : "#66ff66", 3, 'T');
+    const pathT = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathT.setAttribute("d", describeArc(cx, cy, tripleOuter, a1, a2, tripleInner));
+    pathT.setAttribute("fill", i % 2 === 0 ? "#ff6666" : "#66ff66");
+    pathT.style.cursor = "pointer";
+    pathT.addEventListener("click", () => hitSegment(num, 3));
+    svg.appendChild(pathT);
+
     // Single Inner
-    addSegment(tripleInner, singleInner, i % 2 === 0 ? "#eee" : "#ccc", 1, 'S');
+    const pathSi = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathSi.setAttribute("d", describeArc(cx, cy, tripleInner, a1, a2, singleInner));
+    pathSi.setAttribute("fill", i % 2 === 0 ? "#eee" : "#ccc");
+    pathSi.style.cursor = "pointer";
+    pathSi.addEventListener("click", () => hitSegment(num, 1));
+    svg.appendChild(pathSi);
+
     // Double
-    addSegment(doubleOuter, doubleInner, i % 2 === 0 ? "#cc0000" : "#009900", 2, 'D');
+    const pathD = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathD.setAttribute("d", describeArc(cx, cy, doubleOuter, a1, a2, doubleInner));
+    pathD.setAttribute("fill", i % 2 === 0 ? "#cc0000" : "#009900");
+    pathD.style.cursor = "pointer";
+    pathD.addEventListener("click", () => hitSegment(num, 2));
+    svg.appendChild(pathD);
   });
 
   // Bulls
-  const addBull = (r, color, mult, ring) => {
-    const bull = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    bull.setAttribute("cx", cx);
-    bull.setAttribute("cy", cy);
-    bull.setAttribute("r", r);
-    bull.setAttribute("fill", color);
-    bull.style.cursor = "pointer";
-    bull.addEventListener("click", () => hitSegment(25, mult, {cx, cy, ring}));
-    svg.appendChild(bull);
-  };
+  const bullOut = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  bullOut.setAttribute("cx", cx);
+  bullOut.setAttribute("cy", cy);
+  bullOut.setAttribute("r", bullOuter);
+  bullOut.setAttribute("fill", "green");
+  bullOut.style.cursor = "pointer";
+  bullOut.addEventListener("click", () => hitSegment(25, 1));
+  svg.appendChild(bullOut);
 
-  addBull(bullOuter, "green", 1, 'SB');
-  addBull(bullInner, "red", 2, 'DB');
+  const bullIn = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  bullIn.setAttribute("cx", cx);
+  bullIn.setAttribute("cy", cy);
+  bullIn.setAttribute("r", bullInner);
+  bullIn.setAttribute("fill", "red");
+  bullIn.style.cursor = "pointer";
+  bullIn.addEventListener("click", () => hitSegment(25, 2));
+  svg.appendChild(bullIn);
 
-  // Outer numbers
+  // Outer number ring pushed further out
   const numberRadius = doubleOuter + 20;
   segmentOrder.forEach((num, i) => {
     const angle = i * segmentAngle - Math.PI / 2;
@@ -180,8 +190,8 @@ function createDartboard() {
   container.appendChild(svg);
 }
 
-// --- Hit Segment with Animated Marker ---
-function hitSegment(num, mult, markerInfo) {
+// --- Game Logic ---
+function hitSegment(num, mult) {
   if (darts.length >= 3) return;
 
   const val = num * mult;
@@ -189,50 +199,16 @@ function hitSegment(num, mult, markerInfo) {
   beep();
   updateDartsDisplay();
 
-  if (markerInfo) {
-    const svg = document.querySelector("#dartboard-container svg");
-    const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-
-    // Accurate radius per ring
-    let radius;
-    switch (markerInfo.ring) {
-      case 'T': radius = (tripleOuter + tripleInner)/2; break;
-      case 'D': radius = (doubleOuter + doubleInner)/2; break;
-      case 'SB': radius = bullOuter/2; break;
-      case 'DB': radius = bullInner/2; break;
-      default: radius = (singleOuter + tripleOuter)/2;
-    }
-
-    const pos = polarToCartesian(markerInfo.cx, markerInfo.cy, radius, markerInfo.angle);
-    marker.setAttribute("cx", pos.x);
-    marker.setAttribute("cy", pos.y);
-    marker.setAttribute("r", 0);
-    marker.setAttribute("fill", "orange");
-    marker.setAttribute("stroke", "black");
-    marker.setAttribute("stroke-width", "1");
-    svg.appendChild(marker);
-    dartMarkers.push(marker);
-
-    // Animate pop
-    let r = 0;
-    const targetR = 6;
-    const anim = setInterval(() => {
-      r += 1;
-      if (r >= targetR) { r = targetR; clearInterval(anim); }
-      marker.setAttribute("r", r);
-    }, 15);
-  }
-
-  const total = darts.reduce((a,b)=>a+b,0);
+  const total = darts.reduce((a, b) => a + b, 0);
   const combos = checkouts[targetScore] || [];
-  const standardCombo = combos.length>0?combos[0]:null;
-  const standardCodes = standardCombo ? standardCombo.map(h=>h.code).join(', ') : '(none)';
+  const standardCombo = combos.length > 0 ? combos[0] : null;
+  const standardCodes = standardCombo ? standardCombo.map(h => h.code).join(', ') : '(none)';
 
-  if (total===targetScore && mult===2) {
+  if (total === targetScore && mult === 2) {
     score++;
     addHistory(true, standardCodes, total);
     resetRound();
-  } else if (total>targetScore || darts.length===3) {
+  } else if (total > targetScore || darts.length === 3) {
     score--;
     addHistory(false, standardCodes, total);
     resetRound();
@@ -241,24 +217,24 @@ function hitSegment(num, mult, markerInfo) {
   updateScore();
 }
 
-// --- Display / History ---
 function updateDartsDisplay() {
   document.getElementById("darts-display").textContent = darts.join(", ");
 }
-function updateScore() { document.getElementById("score-display").textContent = String(score); }
+
+function updateScore() {
+  document.getElementById("score-display").textContent = String(score);
+}
 
 function newTarget() {
   targetScore = Math.floor(Math.random() * 169) + 2;
   darts = [];
-  updateDartsDisplay();
   document.getElementById("target-display").textContent = String(targetScore);
-
-  // Remove previous markers
-  dartMarkers.forEach(m=>m.remove());
-  dartMarkers = [];
+  updateDartsDisplay();
 }
 
-function resetRound() { newTarget(); }
+function resetRound() {
+  newTarget();
+}
 
 function addHistory(correct, standard, total) {
   const tbody = document.querySelector("#history-table tbody");
@@ -267,23 +243,24 @@ function addHistory(correct, standard, total) {
     <td>${targetScore}</td>
     <td>${darts.join(", ")}</td>
     <td>${total}</td>
-    <td>${correct?"✔":"✖"}</td>
+    <td>${correct ? "✔" : "✖"}</td>
     <td>${standard}</td>
   `;
   tbody.prepend(tr);
 }
 
-// --- Mute ---
+// --- Mute toggle ---
 function toggleSound() {
   soundOn = !soundOn;
   document.getElementById("mute-btn").textContent = soundOn ? "Mute" : "Unmute";
 }
 
-// --- Init ---
+// --- Initialization ---
 createDartboard();
 newTarget();
 document.getElementById("generate-target").addEventListener("click", newTarget);
 
+// Add mute button dynamically
 const leftPanel = document.querySelector(".left-panel");
 const muteBtn = document.createElement("button");
 muteBtn.id = "mute-btn";
