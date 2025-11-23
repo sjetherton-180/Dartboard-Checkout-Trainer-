@@ -1,8 +1,11 @@
-/* General layout */
+/* -------------------------------
+   Dart Checkout Trainer - Styles
+---------------------------------*/
+
 body {
   font-family: Arial, sans-serif;
-  background: #1a1a1a;
-  color: white;
+  background-color: #222;
+  color: #fff;
   margin: 0;
   padding: 0;
 }
@@ -10,85 +13,114 @@ body {
 .container {
   display: flex;
   justify-content: space-between;
-  margin: 20px;
-  flex-wrap: wrap; /* make responsive for smaller screens */
+  padding: 20px;
 }
 
 .panel {
-  padding: 10px;
-  box-sizing: border-box;
+  background-color: #333;
+  padding: 15px;
+  border-radius: 8px;
+  flex: 1;
+  margin: 0 10px;
 }
 
 .left-panel, .right-panel {
-  width: 20%;
-  min-width: 120px; /* responsive fallback */
+  max-width: 200px;
 }
 
 .center-panel {
-  width: 55%;
+  flex: 2;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-width: 300px;
 }
 
-/* Buttons */
+#dartboard-container {
+  width: 400px;
+  height: 400px;
+  background-color: #222;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+h2 {
+  margin-top: 0;
+  color: #FFD700;
+}
+
 .btn {
-  padding: 8px 12px;
-  margin: 5px 0;
-  font-size: 16px;
-  cursor: pointer;
-  background: #333;
-  color: white;
+  display: inline-block;
+  background-color: #FFD700;
+  color: #222;
   border: none;
+  padding: 8px 12px;
+  margin: 10px 0;
   border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
 }
 
 .btn:hover {
-  background: #555;
+  background-color: #e6c200;
 }
 
-/* History table */
+#target-display, #score-display, #darts-display {
+  font-size: 22px;
+  margin-bottom: 10px;
+  text-align: center;
+  color: #00ff00;
+}
+
 .history-container {
+  padding: 15px 20px;
+  background-color: #333;
   margin: 20px;
-  overflow-x: auto; /* in case table is wide */
+  border-radius: 8px;
+  color: #fff;
 }
 
 #history-table {
   width: 100%;
   border-collapse: collapse;
-  color: white;
+  margin-top: 10px;
 }
 
 #history-table th, #history-table td {
   border: 1px solid #555;
-  padding: 6px 10px;
+  padding: 5px 8px;
   text-align: center;
 }
 
 #history-table th {
-  background: #222;
+  background-color: #444;
+  color: #FFD700;
 }
 
-/* Dartboard container */
-#dartboard-container {
-  background: #111;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: visible; /* allow outer numbers to show */
+#history-table td {
+  background-color: #222;
+  color: #fff;
 }
 
-/* Responsive scaling for smaller screens */
-@media screen and (max-width: 900px) {
+#mute-btn {
+  width: 100%;
+  margin-top: 5px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
   .container {
     flex-direction: column;
     align-items: center;
   }
 
-  .left-panel, .center-panel, .right-panel {
+  .panel {
+    margin: 10px 0;
     width: 90%;
-    margin-bottom: 20px;
+  }
+
+  #dartboard-container {
+    width: 300px;
+    height: 300px;
   }
 }
