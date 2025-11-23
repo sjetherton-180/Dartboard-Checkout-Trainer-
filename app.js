@@ -67,10 +67,10 @@ function createDartboard(){
   const segmentAngle=2*Math.PI/totalSegments;
   const startOffset=-Math.PI/2 - segmentAngle/2;
 
-  const singleOuter=160,singleInner=40;
+  const singleOuter=150,singleInner=35;
   const tripleOuter=120,tripleInner=100;
-  const doubleOuter=180,doubleInner=160;
-  const bullOuter=40,bullInner=15; // Enlarged for easier clicking
+  const doubleOuter=170,doubleInner=150;
+  const bullOuter=35,bullInner=20; // Enlarged for easier clicking
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
@@ -82,7 +82,7 @@ function createDartboard(){
     addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
 
     // --- Outer numbers pushed outward for visibility ---
-    const numberRadius = doubleOuter + 15; // Was 25
+    const numberRadius = doubleOuter + 8; // Was 25
     const angle = (startAngle + endAngle)/2;
     const pos = polarToCartesian(cx, cy, numberRadius, angle);
     const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
