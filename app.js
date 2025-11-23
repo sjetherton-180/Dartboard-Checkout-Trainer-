@@ -63,7 +63,7 @@ function createDartboard() {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
   // Expand viewBox to fit outer numbers
-  svg.setAttribute("viewBox", "-20 -20 440 440");
+  svg.setAttribute("viewBox", "-40 -40 480 480");
   svg.setAttribute("width", size);
   svg.setAttribute("height", size);
 
@@ -130,7 +130,7 @@ function createDartboard() {
   innerBull.addEventListener("click", () => hitSegment(25, 2));
   svg.appendChild(innerBull);
 
-  // --- Outer number ring ---
+  // --- Outer number ring (visible) ---
   const numberRadius = doubleOuter + 12;
   segmentOrder.forEach((num, i) => {
     const centerAngle = i * segmentAngle - Math.PI / 2;
@@ -142,7 +142,9 @@ function createDartboard() {
     txt.setAttribute("text-anchor", "middle");
     txt.setAttribute("font-size", "18");
     txt.setAttribute("font-weight", "bold");
-    txt.setAttribute("fill", "white");
+    txt.setAttribute("fill", "#FFD700");   // bright gold
+    txt.setAttribute("stroke", "black");   // outline for contrast
+    txt.setAttribute("stroke-width", "1");
     txt.style.userSelect = "none";
     txt.textContent = num;
     svg.appendChild(txt);
