@@ -108,16 +108,18 @@ addBull(svg,cx,cy,bullInner,"red","DB");   // Inner Bull
 
 // --- Add Segment ---
 function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,ringType,num,mult){
-  const path=document.createElementNS("http://www.w3.org/2000/svg","path");
-  path.setAttribute("d",describeArc(cx,cy,rOuter,rInner,startAngle,endAngle));
-  path.setAttribute("fill",color);
-  path.style.cursor="pointer";
+  const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+  path.setAttribute("d", describeArc(cx, cy, rOuter, rInner, startAngle, endAngle));
+  path.setAttribute("fill", color);
+  path.setAttribute("stroke", "#000");           // Add black border
+  path.setAttribute("stroke-width", "1");        // Border thickness
+  path.style.cursor = "pointer";
 
   // Hover highlight
-  path.addEventListener("mouseenter",()=>path.setAttribute("fill",lightenColor(color,0.3)));
-  path.addEventListener("mouseleave",()=>path.setAttribute("fill",color));
+  path.addEventListener("mouseenter", ()=>path.setAttribute("fill", lightenColor(color,0.3)));
+  path.addEventListener("mouseleave", ()=>path.setAttribute("fill", color));
 
-  path.addEventListener("click",()=>hitSegment(num,mult,{cx,cy,ring:ringType,angle:(startAngle+endAngle)/2,rOuter,rInner}));
+  path.addEventListener("click", ()=>hitSegment(num, mult, {cx, cy, ring: ringType, angle: (startAngle+endAngle)/2, rOuter, rInner}));
   svg.appendChild(path);
 }
 
@@ -128,6 +130,8 @@ function addBull(svg, cx, cy, r, color, ringType){
   bull.setAttribute("cy", cy);
   bull.setAttribute("r", r);
   bull.setAttribute("fill", color);
+  bull.setAttribute("stroke", "#000");    // Black outline for bulls
+  bull.setAttribute("stroke-width", "1.5");
   bull.style.cursor = "pointer";
 
   bull.addEventListener("click", () => {
