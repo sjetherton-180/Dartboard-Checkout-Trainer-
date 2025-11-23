@@ -1,6 +1,6 @@
 // ------------------------------
 // Dart Checkout Trainer - Full Version
-// Corrected: Bull/DB clickable, numbers aligned, segment rotation
+// Corrected: 20 at top, numbers aligned, enlarged bulls clickable
 // ------------------------------
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
@@ -40,7 +40,7 @@ const preferredOuts = {
   44:["S4","D20"],43:["S3","D20"],42:["S10","D16"],41:["S9","D16"],40:["S20","D10"]
 };
 
-// --- Polar and SVG Helpers ---
+// --- Polar Helpers ---
 function polarToCartesian(cx,cy,r,angle){return {x:cx+r*Math.cos(angle),y:cy+r*Math.sin(angle)};}
 function describeArc(cx,cy,rOuter,rInner,startAngle,endAngle){
   const p1=polarToCartesian(cx,cy,rOuter,startAngle);
@@ -60,28 +60,27 @@ function createDartboard(){
   const size=400; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","0 0 400 400");
   const cx=200,cy=200;
-  const segmentAngle=2*Math.PI/20;
+  const totalSegments = segmentOrder.length;
+  const segmentAngle=2*Math.PI/totalSegments;
+  const startOffset=-Math.PI/2 - segmentAngle/2; // center 20 at top
+
   const singleOuter=160,singleInner=50,tripleInner=90,tripleOuter=110,doubleInner=140,doubleOuter=160;
-  const bullOuter=22,bullInner=10; // enlarged bulls
+  const bullOuter=22,bullInner=10;
 
   segmentOrder.forEach((num,i)=>{
-    const startAngle=-Math.PI/2 + i*segmentAngle;
+    const startAngle=startOffset + i*segmentAngle;
     const endAngle=startAngle + segmentAngle;
+
     addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
     addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,i%2===0?"#ff6666":"#66ff66","T",num,3);
     addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
     addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
-  });
 
-  addBull(svg,cx,cy,bullOuter,"green","SB"); // outer bull
-  addBull(svg,cx,cy,bullInner,"red","DB");   // inner bull
-
-  // Outer numbers
-  const numberRadius=doubleOuter+25;
-  segmentOrder.forEach((num,i)=>{
-    const angle=-Math.PI/2 + i*segmentAngle + segmentAngle/2;
-    const pos=polarToCartesian(cx,cy,numberRadius,angle);
-    const txt=document.createElementNS("http://www.w3.org/2000/svg","text");
+    // Outer numbers
+    const numberRadius = doubleOuter + 25;
+    const angle = (startAngle + endAngle)/2;
+    const pos = polarToCartesian(cx, cy, numberRadius, angle);
+    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
     txt.setAttribute("x", pos.x);
     txt.setAttribute("y", pos.y);
     txt.setAttribute("text-anchor", "middle");
@@ -92,6 +91,9 @@ function createDartboard(){
     txt.textContent=num;
     svg.appendChild(txt);
   });
+
+  addBull(svg,cx,cy,bullOuter,"green","SB"); // outer bull
+  addBull(svg,cx,cy,bullInner,"red","DB");   // inner bull
 
   container.appendChild(svg);
 }
@@ -131,7 +133,7 @@ function hitSegment(num,mult,markerInfo){
       case 'DB': radius=10/2; break;
       default: radius=(160+110)/2;
     }
-    const pos=polarToCartesian(markerInfo.cx,markerInfo.cy,radius,markerInfo.angle);
+    const pos=polarToCartesian(markerInfo.cx,markerInfo.cy,radius,markerInfo.angle||0);
     marker.setAttribute("cx",pos.x); marker.setAttribute("cy",pos.y);
     marker.setAttribute("r",0); marker.setAttribute("fill","orange"); marker.setAttribute("stroke","black"); marker.setAttribute("stroke-width","1");
     svg.appendChild(marker); dartMarkers.push(marker);
