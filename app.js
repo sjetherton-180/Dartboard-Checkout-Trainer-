@@ -40,13 +40,15 @@ function describeArc(cx, cy, rOuter, startAngle, endAngle, rInner) {
 }
 
 function beep() {
-  const ctx = new AudioContext();
-  const osc = ctx.createOscillator();
-  osc.type = "square";
-  osc.frequency.value = 600;
-  osc.connect(ctx.destination);
-  osc.start();
-  setTimeout(() => osc.stop(), 80);
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.value = 600;
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), 80);
+  } catch (e) { /* ignore */ }
 }
 
 // ------------------------------
@@ -57,9 +59,11 @@ function createDartboard() {
   const container = document.getElementById("dartboard-container");
   container.innerHTML = "";
 
-  const size = 300;
+  const size = 600; // 2× bigger
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 400 400");
+
+  // Expand viewBox to fit outer numbers
+  svg.setAttribute("viewBox", "-40 -40 480 480");
   svg.setAttribute("width", size);
   svg.setAttribute("height", size);
 
@@ -76,12 +80,13 @@ function createDartboard() {
 
   const segmentAngle = 2 * Math.PI / 20;
 
+  // --- Segments ---
   segmentOrder.forEach((num, i) => {
     const centerAngle = i * segmentAngle - Math.PI / 2;
     const a1 = centerAngle - segmentAngle / 2;
     const a2 = centerAngle + segmentAngle / 2;
 
-    // --- Single Area ---
+    // Single
     const s = document.createElementNS("http://www.w3.org/2000/svg", "path");
     s.setAttribute("d", describeArc(cx, cy, singleOuter, a1, a2, singleInner));
     s.setAttribute("fill", i % 2 === 0 ? "#e7e7e7" : "#cfcfcf");
@@ -89,7 +94,7 @@ function createDartboard() {
     s.addEventListener("click", () => hitSegment(num, 1));
     svg.appendChild(s);
 
-    // --- Triple ---
+    // Triple
     const t = document.createElementNS("http://www.w3.org/2000/svg", "path");
     t.setAttribute("d", describeArc(cx, cy, tripleOuter, a1, a2, tripleInner));
     t.setAttribute("fill", i % 2 === 0 ? "#ff4d4d" : "#4dff4d");
@@ -97,31 +102,16 @@ function createDartboard() {
     t.addEventListener("click", () => hitSegment(num, 3));
     svg.appendChild(t);
 
-    // --- Double ---
+    // Double
     const d = document.createElementNS("http://www.w3.org/2000/svg", "path");
     d.setAttribute("d", describeArc(cx, cy, doubleOuter, a1, a2, doubleInner));
     d.setAttribute("fill", i % 2 === 0 ? "#ff0000" : "#00cc00");
     d.style.cursor = "pointer";
     d.addEventListener("click", () => hitSegment(num, 2));
     svg.appendChild(d);
-
-    // --- Numbers (upright & centered) ---
-    const nr = 185;
-    const pos = polarToCartesian(cx, cy, nr, centerAngle);
-
-    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    txt.setAttribute("x", pos.x);
-    txt.setAttribute("y", pos.y + 6);
-    txt.setAttribute("text-anchor", "middle");
-    txt.setAttribute("font-size", "20");
-    txt.setAttribute("font-weight", "bold");
-    txt.setAttribute("fill", "white");
-    txt.style.userSelect = "none";
-    txt.textContent = num;
-    svg.appendChild(txt);
   });
 
-  // --- Bulls ---
+  // Bulls
   const outerBull = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   outerBull.setAttribute("cx", cx);
   outerBull.setAttribute("cy", cy);
@@ -140,6 +130,26 @@ function createDartboard() {
   innerBull.addEventListener("click", () => hitSegment(25, 2));
   svg.appendChild(innerBull);
 
+  // --- Outer number ring (visible) ---
+  const numberRadius = doubleOuter + 12;
+  segmentOrder.forEach((num, i) => {
+    const centerAngle = i * segmentAngle - Math.PI / 2;
+    const pos = polarToCartesian(cx, cy, numberRadius, centerAngle);
+
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", pos.x);
+    txt.setAttribute("y", pos.y + 6);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("font-size", "18");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("fill", "#FFD700");   // bright gold
+    txt.setAttribute("stroke", "black");   // outline for contrast
+    txt.setAttribute("stroke-width", "1");
+    txt.style.userSelect = "none";
+    txt.textContent = num;
+    svg.appendChild(txt);
+  });
+
   container.appendChild(svg);
 }
 
@@ -148,29 +158,30 @@ function createDartboard() {
 // ------------------------------
 
 function hitSegment(num, mult) {
+  if (darts.length >= 3) return; // limit to 3 darts per attempt
+
   const val = num * mult;
   darts.push(val);
   beep();
   updateDartsDisplay();
 
-  const remaining = targetScore - darts.reduce((a, b) => a + b, 0);
+  const total = darts.reduce((a, b) => a + b, 0);
 
-  if (remaining === 0 && mult === 2) {
+  if (total === targetScore && mult === 2) {
     score++;
     updateScore();
-    addHistory(true, val);
+    addHistory(true);
     resetRound();
-  } else if (remaining < 0) {
+  } else if (total > targetScore || darts.length === 3) {
     score--;
     updateScore();
-    addHistory(false, val);
+    addHistory(false);
     resetRound();
   }
 }
 
 function updateDartsDisplay() {
-  document.getElementById("darts-display").textContent =
-    darts.map(d => d).join(", ");
+  document.getElementById("darts-display").textContent = darts.join(", ");
 }
 
 function updateScore() {
@@ -188,12 +199,12 @@ function resetRound() {
   newTarget();
 }
 
-// Only 2 alternatives
+// Placeholder alternatives — replace with real checkout logic
 function getAlternatives(score) {
   return ["T20 T20 D25", "T19 T14 D20"];
 }
 
-function addHistory(correct, lastVal) {
+function addHistory(correct) {
   const tbody = document.querySelector("#history-table tbody");
   const row = document.createElement("tr");
 
@@ -204,12 +215,11 @@ function addHistory(correct, lastVal) {
     <td>Standard Out</td>
     <td>${getAlternatives(targetScore).join(" | ")}</td>
   `;
-
   tbody.prepend(row);
 }
 
 // ------------------------------
-// Init
+// Initialize
 // ------------------------------
 
 createDartboard();
