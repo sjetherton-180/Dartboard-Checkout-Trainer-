@@ -1,5 +1,5 @@
 // ------------------------------
-// Dart Checkout Trainer - Full Version
+// Dart Checkout Trainer - Full Version (Corrected Segment Rotation)
 // ------------------------------
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
@@ -58,12 +58,14 @@ function createDartboard(){
   const container=document.getElementById("dartboard-container"); container.innerHTML="";
   const size=400; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","0 0 400 400");
-  const cx=200,cy=200; const segmentAngle=2*Math.PI/20;
+  const cx=200,cy=200;
+  const segmentAngle=2*Math.PI/20;
   const singleOuter=160,singleInner=50,tripleInner=90,tripleOuter=110,doubleInner=140,doubleOuter=160;
   const bullOuter=15,bullInner=7;
 
   segmentOrder.forEach((num,i)=>{
-    const startAngle=i*segmentAngle-Math.PI/2,endAngle=startAngle+segmentAngle;
+    const startAngle=-Math.PI/2 + i*segmentAngle;
+    const endAngle=startAngle + segmentAngle;
     addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
     addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,i%2===0?"#ff6666":"#66ff66","T",num,3);
     addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
@@ -73,9 +75,10 @@ function createDartboard(){
   addBull(svg,cx,cy,bullOuter,"green","SB");
   addBull(svg,cx,cy,bullInner,"red","DB");
 
+  // Outer numbers
   const numberRadius=doubleOuter+20;
   segmentOrder.forEach((num,i)=>{
-    const angle=i*segmentAngle-Math.PI/2;
+    const angle=-Math.PI/2 + i*segmentAngle + segmentAngle/2;
     const pos=polarToCartesian(cx,cy,numberRadius,angle);
     const txt=document.createElementNS("http://www.w3.org/2000/svg","text");
     txt.setAttribute("x",pos.x); txt.setAttribute("y",pos.y+6);
