@@ -1,4 +1,4 @@
-// Dart Checkout Trainer - Full Updated with Enlarged Bulls & Gold Numbers
+// Dart Checkout Trainer - Full Updated with Visible Outer Numbers
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let targetScore = 0, darts = [], score = 0, dartMarkers = [], soundOn = true;
@@ -61,7 +61,7 @@ function beep(){if(!soundOn)return;try{const ctx=new (window.AudioContext||windo
 function createDartboard(){
   const container=document.getElementById("dartboard-container"); container.innerHTML="";
   const size=400; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","-40 -40 400 400");
+  svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","0 0 400 400");
   const cx=200,cy=200;
   const totalSegments = segmentOrder.length;
   const segmentAngle=2*Math.PI/totalSegments;
@@ -70,7 +70,7 @@ function createDartboard(){
   const singleOuter=160,singleInner=50;
   const tripleOuter=120,tripleInner=90;
   const doubleOuter=190,doubleInner=160;
-  const bullOuter=40,bullInner=25; // Increased for larger clickable area
+  const bullOuter=40,bullInner=25; // Enlarged for easier clicking
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
@@ -81,8 +81,8 @@ function createDartboard(){
     addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
     addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
 
-    // --- Outer numbers with gold fill and black outline ---
-    const numberRadius = doubleOuter + 25;
+    // --- Outer numbers pushed outward for visibility ---
+    const numberRadius = doubleOuter + 40; // Was 25
     const angle = (startAngle + endAngle)/2;
     const pos = polarToCartesian(cx, cy, numberRadius, angle);
     const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
@@ -99,8 +99,8 @@ function createDartboard(){
     svg.appendChild(txt);
   });
 
-  addBull(svg,cx,cy,bullOuter,"green","SB"); // Outer Bull
-  addBull(svg,cx,cy,bullInner,"red","DB");   // Inner Bull
+  addBull(svg,cx,cy,bullOuter,"green","SB");
+  addBull(svg,cx,cy,bullInner,"red","DB");
 
   container.appendChild(svg);
 }
