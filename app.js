@@ -76,10 +76,11 @@ function createDartboard(){
     const startAngle=startOffset + i*segmentAngle;
     const endAngle=startAngle + segmentAngle;
 
-    addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
-    addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,i%2===0?"#ff6666":"#66ff66","T",num,3);
-    addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
-    addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
+addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,i%2===0?"#ffffff":"#000000","S",num,1); // Single
+addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","T",num,3); // Triple ring
+addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#ffffff":"#000000","S",num,1); // Inner single
+addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2); // Double ring
+
 
     // --- Outer numbers ---
     const numberRadius = doubleOuter + 15;
@@ -99,8 +100,8 @@ function createDartboard(){
     svg.appendChild(txt);
   });
 
-  addBull(svg,cx,cy,bullOuter,"green","SB");
-  addBull(svg,cx,cy,bullInner,"red","DB");
+addBull(svg,cx,cy,bullOuter,"green","SB"); // Outer Bull
+addBull(svg,cx,cy,bullInner,"red","DB");   // Inner Bull
 
   container.appendChild(svg);
 }
