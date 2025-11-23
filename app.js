@@ -60,17 +60,17 @@ function beep(){if(!soundOn)return;try{const ctx=new (window.AudioContext||windo
 // --- Dartboard ---
 function createDartboard(){
   const container=document.getElementById("dartboard-container"); container.innerHTML="";
-  const size=400; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  const size=450; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","0 0 400 400");
   const cx=200,cy=200;
   const totalSegments = segmentOrder.length;
   const segmentAngle=2*Math.PI/totalSegments;
   const startOffset=-Math.PI/2 - segmentAngle/2;
 
-  const singleOuter=160,singleInner=50;
-  const tripleOuter=130,tripleInner=90;
-  const doubleOuter=190,doubleInner=160;
-  const bullOuter=45,bullInner=30;
+  const singleOuter=160,singleInner=45;
+  const tripleOuter=120,tripleInner=90;
+  const doubleOuter=190,doubleInner=170;
+  const bullOuter=45,bullInner=20;
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
