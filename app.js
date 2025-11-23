@@ -62,7 +62,7 @@ function createDartboard(){
   const container=document.getElementById("dartboard-container"); container.innerHTML="";
   const size=450; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
   svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","0 0 450 450");
-  const cx=200,cy=200;
+  const cx=225,cy=225;
   const totalSegments = segmentOrder.length;
   const segmentAngle=2*Math.PI/totalSegments;
   const startOffset=-Math.PI/2 - segmentAngle/2;
