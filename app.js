@@ -1,328 +1,217 @@
-// app.js
-// Dart Checkout Trainer — Option 2 (numbers upright, 20 centered at top)
+// ------------------------------
+// Dartboard + Checkout Trainer
+// ------------------------------
 
-// --- Setup: segments and hit definitions ---
-const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const segmentOrder = [
+  20, 1, 18, 4, 13, 6, 10, 15, 2, 17,
+  3, 19, 7, 16, 8, 11, 14, 9, 12, 5
+];
 
-const hits = [];
-for (let n = 1; n <= 20; n++) {
-  hits.push({ code: `S${n}`, label: `S ${n}`, value: n, isDouble: false, base: n });
-  hits.push({ code: `D${n}`, label: `D ${n}`, value: n*2, isDouble: true, base: n });
-  hits.push({ code: `T${n}`, label: `T ${n}`, value: n*3, isDouble: false, base: n });
-}
-hits.push({ code: 'SB', label: 'S25', value: 25, isDouble: false, base: 25 });
-hits.push({ code: 'DB', label: 'D25', value: 50, isDouble: true, base: 25 });
-
-// --- Precompute checkouts (2..170) ---
-const MAX_TARGET = 170;
-const checkouts = {};
-for (let t = 2; t <= MAX_TARGET; t++) checkouts[t] = [];
-
-for (const a of hits) {
-  if (a.value <= MAX_TARGET && a.isDouble) checkouts[a.value].push([a]);
-  for (const b of hits) {
-    const sum2 = a.value + b.value;
-    if (sum2 <= MAX_TARGET && b.isDouble) checkouts[sum2].push([a,b]);
-    for (const c of hits) {
-      const sum3 = a.value + b.value + c.value;
-      if (sum3 <= MAX_TARGET && c.isDouble) checkouts[sum3].push([a,b,c]);
-    }
-  }
-}
-// dedupe
-for (let t = 2; t <= MAX_TARGET; t++) {
-  const seen = new Set();
-  const uniq = [];
-  for (const seq of checkouts[t]) {
-    const key = seq.map(s=>s.code).join(',');
-    if (!seen.has(key)) { seen.add(key); uniq.push(seq); }
-  }
-  checkouts[t] = uniq;
-}
-
-// --- App state ---
-let target = 0;
-let picks = [];           // array of hit objects (up to 3)
+let targetScore = 0;
+let darts = [];
 let score = 0;
-let history = [];         // recent attempts
 
-// --- DOM references (assumes index.html elements exist) ---
-const targetDisplay = document.getElementById('target-display');
-const dartsDisplay  = document.getElementById('darts-display');
-const scoreDisplay  = document.getElementById('score-display');
-const historyBody   = document.querySelector('#history-table tbody');
-const boardContainer = document.getElementById('dartboard-container');
+// ------------------------------
+// Utility Functions
+// ------------------------------
 
-// --- Audio beep (short) ---
+function polarToCartesian(cx, cy, r, angle) {
+  return {
+    x: cx + r * Math.cos(angle),
+    y: cy + r * Math.sin(angle)
+  };
+}
+
+function describeArc(cx, cy, rOuter, startAngle, endAngle, rInner) {
+  const p1 = polarToCartesian(cx, cy, rOuter, startAngle);
+  const p2 = polarToCartesian(cx, cy, rOuter, endAngle);
+  const p3 = polarToCartesian(cx, cy, rInner, endAngle);
+  const p4 = polarToCartesian(cx, cy, rInner, startAngle);
+
+  const largeArc = endAngle - startAngle <= Math.PI ? 0 : 1;
+
+  return `
+    M ${p1.x} ${p1.y}
+    A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y}
+    L ${p3.x} ${p3.y}
+    A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y}
+    Z
+  `;
+}
+
 function beep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    osc.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0.08, ctx.currentTime);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.08);
-  } catch(e) {
-    // AudioContext not available — ignore
-  }
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  osc.type = "square";
+  osc.frequency.value = 600;
+  osc.connect(ctx.destination);
+  osc.start();
+  setTimeout(() => osc.stop(), 80);
 }
 
-// --- Utility: create SVG element ---
-function svgEl(name, attrs={}) {
-  const ns = 'http://www.w3.org/2000/svg';
-  const el = document.createElementNS(ns, name);
-  for (const k in attrs) el.setAttribute(k, String(attrs[k]));
-  return el;
-}
+// ------------------------------
+// Create Dartboard
+// ------------------------------
 
-// --- Render board (correctly rotated: 20 centered at top) ---
-// Also attaches click listeners that pass the SVG click event so we can place dots at the exact click coordinate.
-function renderBoard() {
-  boardContainer.innerHTML = '';
-  const svg = svgEl('svg', { viewBox: '0 0 200 200', preserveAspectRatio: 'xMidYMid meet' });
-  svg.style.width = '200px';  // final display size; controlled by CSS too
-  svg.style.height = '200px';
+function createDartboard() {
+  const container = document.getElementById("dartboard-container");
+  container.innerHTML = "";
 
-  const cx = 100, cy = 100;
-  // Standard-ish radii (scaled to viewBox 200)
-  const bullInner = 6;
+  const size = 300;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 400 400");
+  svg.setAttribute("width", size);
+  svg.setAttribute("height", size);
+
+  const cx = 200, cy = 200;
+
+  const singleOuter = 162;
+  const tripleOuter = 107;
+  const tripleInner = 99;
+  const singleInner = 40;
+  const doubleOuter = 170;
+  const doubleInner = 162;
   const bullOuter = 12;
-  const tripleInner = 60;
-  const tripleOuter = 70;
-  const doubleInner = 80;
-  const doubleOuter = 90;
-  const singleInner = 30;
-  const singleOuter = 80;
+  const bullInner = 6;
 
-  const segmentCount = 20;
-  const segmentAngle = 2 * Math.PI / segmentCount;
+  const segmentAngle = 2 * Math.PI / 20;
 
-  // Draw rings in order so overlay looks right: single outer, triple ring, single inner, double ring drawn last over them
   segmentOrder.forEach((num, i) => {
-    const centerAngle = i * segmentAngle - Math.PI/2; // center of this segment (20 at top)
-    const angle1 = centerAngle - segmentAngle/2;
-    const angle2 = centerAngle + segmentAngle/2;
+    const centerAngle = i * segmentAngle - Math.PI / 2;
+    const a1 = centerAngle - segmentAngle / 2;
+    const a2 = centerAngle + segmentAngle / 2;
 
-    // single outer (outside triple, between double and triple)
-    const pSingleOuter = svgEl('path', {
-      d: describeArc(cx,cy, singleOuter, angle1, angle2, tripleOuter),
-      fill: (i % 2 === 0) ? '#111827' : '#0b1220',
-      class: 'clickable'
-    });
-    pSingleOuter.addEventListener('click', (ev)=> { onSegmentClick(ev, svg, num, 1, pSingleOuter); });
-    svg.appendChild(pSingleOuter);
+    // --- Single Area ---
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    s.setAttribute("d", describeArc(cx, cy, singleOuter, a1, a2, singleInner));
+    s.setAttribute("fill", i % 2 === 0 ? "#e7e7e7" : "#cfcfcf");
+    s.style.cursor = "pointer";
+    s.addEventListener("click", () => hitSegment(num, 1));
+    svg.appendChild(s);
 
-    // triple ring
-    const pTriple = svgEl('path', {
-      d: describeArc(cx,cy, tripleOuter, angle1, angle2, tripleInner),
-      fill: (i % 2 === 0) ? '#00640066' : '#8b000066', // subtle green / red
-      class: 'clickable'
-    });
-    pTriple.addEventListener('click', (ev)=> { onSegmentClick(ev, svg, num, 3, pTriple); });
-    svg.appendChild(pTriple);
+    // --- Triple ---
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    t.setAttribute("d", describeArc(cx, cy, tripleOuter, a1, a2, tripleInner));
+    t.setAttribute("fill", i % 2 === 0 ? "#ff4d4d" : "#4dff4d");
+    t.style.cursor = "pointer";
+    t.addEventListener("click", () => hitSegment(num, 3));
+    svg.appendChild(t);
 
-    // single inner (between triple and bull)
-    const pSingleInner = svgEl('path', {
-      d: describeArc(cx,cy, tripleInner, angle1, angle2, singleInner),
-      fill: (i % 2 === 0) ? '#111827' : '#0b1220',
-      class: 'clickable'
-    });
-    pSingleInner.addEventListener('click', (ev)=> { onSegmentClick(ev, svg, num, 1, pSingleInner); });
-    svg.appendChild(pSingleInner);
+    // --- Double ---
+    const d = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    d.setAttribute("d", describeArc(cx, cy, doubleOuter, a1, a2, doubleInner));
+    d.setAttribute("fill", i % 2 === 0 ? "#ff0000" : "#00cc00");
+    d.style.cursor = "pointer";
+    d.addEventListener("click", () => hitSegment(num, 2));
+    svg.appendChild(d);
 
-    // double ring (outermost ring)
-    const pDouble = svgEl('path', {
-      d: describeArc(cx,cy, doubleOuter, angle1, angle2, doubleInner),
-      fill: (i % 2 === 0) ? '#006400cc' : '#8b0000cc',
-      class: 'clickable'
-    });
-    pDouble.addEventListener('click', (ev)=> { onSegmentClick(ev, svg, num, 2, pDouble); });
-    svg.appendChild(pDouble);
-  });
+    // --- Numbers (upright & centered) ---
+    const nr = 185;
+    const pos = polarToCartesian(cx, cy, nr, centerAngle);
 
-  // Bulls (outer then inner)
-  const outerBull = svgEl('circle', { cx, cy, r: bullOuter, fill: '#ffff66', class: 'clickable' });
-  outerBull.addEventListener('click', (ev)=> { onSegmentClick(ev, svg, 25, 1, outerBull); });
-  svg.appendChild(outerBull);
-  const innerBull = svgEl('circle', { cx, cy, r: bullInner, fill: '#ff3333', class: 'clickable' });
-  innerBull.addEventListener('click', (ev)=> { onSegmentClick(ev, svg, 25, 2, innerBull); });
-  svg.appendChild(innerBull);
-
-  // Outer number ring (numbers upright)
-  const numberRadius = doubleOuter + 10;
-  segmentOrder.forEach((num,i) => {
-    const centerAngle = i * segmentAngle - Math.PI/2;
-    const x = cx + numberRadius * Math.cos(centerAngle);
-    const y = cy + numberRadius * Math.sin(centerAngle);
-    const txt = svgEl('text', {
-      x, y,
-      'text-anchor':'middle',
-      'dominant-baseline':'middle',
-      fill: '#ffffff',
-      'font-size': 11,
-      'font-weight': '700'
-    });
-    // Option 2: numbers remain upright — do not rotate text element
-    txt.textContent = String(num);
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", pos.x);
+    txt.setAttribute("y", pos.y + 6);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("font-size", "20");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("fill", "white");
+    txt.style.userSelect = "none";
+    txt.textContent = num;
     svg.appendChild(txt);
   });
 
-  boardContainer.appendChild(svg);
+  // --- Bulls ---
+  const outerBull = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  outerBull.setAttribute("cx", cx);
+  outerBull.setAttribute("cy", cy);
+  outerBull.setAttribute("r", bullOuter);
+  outerBull.setAttribute("fill", "green");
+  outerBull.style.cursor = "pointer";
+  outerBull.addEventListener("click", () => hitSegment(25, 1));
+  svg.appendChild(outerBull);
+
+  const innerBull = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  innerBull.setAttribute("cx", cx);
+  innerBull.setAttribute("cy", cy);
+  innerBull.setAttribute("r", bullInner);
+  innerBull.setAttribute("fill", "red");
+  innerBull.style.cursor = "pointer";
+  innerBull.addEventListener("click", () => hitSegment(25, 2));
+  svg.appendChild(innerBull);
+
+  container.appendChild(svg);
 }
 
-// --- event when clicking a path/circle on the board ---
-// ev = MouseEvent, svg = the SVG element, number = base number or 25, mult = 1/2/3, pathEl = clicked element
-function onSegmentClick(ev, svg, number, mult, pathEl) {
-  // Add highlight, beep, dot at the exact click coordinates in SVG space
-  highlightSegment(pathEl);
+// ------------------------------
+// Game Logic
+// ------------------------------
+
+function hitSegment(num, mult) {
+  const val = num * mult;
+  darts.push(val);
   beep();
-  addDotAtSvg(ev, svg);
+  updateDartsDisplay();
 
-  // Register the hit
-  onHit(number, mult);
-}
+  const remaining = targetScore - darts.reduce((a, b) => a + b, 0);
 
-// --- place a small dot exactly where user clicked (SVG coordinate transform) ---
-function addDotAtSvg(mouseEvent, svg) {
-  const pt = svg.createSVGPoint();
-  pt.x = mouseEvent.clientX;
-  pt.y = mouseEvent.clientY;
-  const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
-  const dot = svgEl('circle', { cx: loc.x, cy: loc.y, r: 2, fill: '#ffff00' });
-  svg.appendChild(dot);
-  setTimeout(()=>{ if (dot.parentNode) dot.parentNode.removeChild(dot); }, 1800);
-}
-
-// --- highlight element briefly ---
-function highlightSegment(el) {
-  if (!el) return;
-  const orig = el.getAttribute('fill') || '';
-  el.setAttribute('fill', '#ffff66');
-  setTimeout(()=>{ if (el) el.setAttribute('fill', orig); }, 150);
-}
-
-// --- click handling logic (register hit, update UI) ---
-function onHit(number, multiplier) {
-  // find hit object
-  const hit = hits.find(h => h.base === number && (
-    (multiplier === 1 && !h.isDouble && h.value === number) ||
-    (multiplier === 2 && h.isDouble && h.value === number*2) ||
-    (multiplier === 3 && !h.isDouble && h.value === number*3)
-  ));
-  if (!hit) return;
-  picks.push(hit);
-  updateDartsPanel();
-
-  // If we have 3 darts, or the running sum >= target, validate
-  const sum = picks.reduce((s,p)=>s+p.value,0);
-  if (picks.length >= 3 || (target > 0 && sum >= target)) {
-    validateCheckout();
+  if (remaining === 0 && mult === 2) {
+    score++;
+    updateScore();
+    addHistory(true, val);
+    resetRound();
+  } else if (remaining < 0) {
+    score--;
+    updateScore();
+    addHistory(false, val);
+    resetRound();
   }
 }
 
-// --- UI helpers ---
-function updateDartsPanel() {
-  dartsDisplay.textContent = picks.map(p=>p.code).join(', ');
+function updateDartsDisplay() {
+  document.getElementById("darts-display").textContent =
+    darts.map(d => d).join(", ");
 }
 
-function totalPicks() { return picks.reduce((s,p)=>s+p.value,0); }
-
-// --- validation and scoring; show standard + up to 2 alternatives ---
-function validateCheckout() {
-  if (target <= 0) {
-    // nothing to validate
-    picks = [];
-    updateDartsPanel();
-    return;
-  }
-
-  const sum = totalPicks();
-  const possible = checkouts[target] || [];
-  const standard = possible.length > 0 ? possible[0].map(h=>h.code).join(', ') : '(none)';
-  const alternatives = possible.slice(1,3).map(s => s.map(h=>h.code).join(', ')); // only 2 alternatives
-
-  let correct = false;
-  if (sum === target && picks[picks.length-1] && picks[picks.length-1].isDouble) {
-    correct = true;
-    score += 1;
-  } else {
-    score -= 1;
-  }
-  scoreDisplay.textContent = String(score);
-
-  // push history
-  history.unshift({
-    target: target,
-    userHits: picks.map(h=>h.code).join(', '),
-    correct: correct ? 'Yes' : 'No',
-    standardOut: standard,
-    alternatives: alternatives.join(' | ')
-  });
-
-  // immediate feedback: show standard/out and alternatives when incorrect
-  if (!correct) {
-    const altText = alternatives.length ? `Alternatives: ${alternatives.join(' | ')}` : '';
-    // show a friendly popup (alert) with standard and alternatives
-    alert(`Not correct.\nStandard out: ${standard}\n${altText}`);
-  } else {
-    // small confirmation for correct
-    // use a brief toast instead of alert for nicer UX
-    showTempMessage('Correct — nice finish!', 1200);
-  }
-
-  updateHistoryTable();
-  picks = [];
-  updateDartsPanel();
+function updateScore() {
+  document.getElementById("score-display").textContent = score;
 }
 
-// --- update history table display ---
-function updateHistoryTable() {
-  historyBody.innerHTML = '';
-  history.forEach(item => {
-    const tr = document.createElement('tr');
-    ['target','userHits','correct','standardOut','alternatives'].forEach(k => {
-      const td = document.createElement('td');
-      td.textContent = item[k] ?? '';
-      tr.appendChild(td);
-    });
-    historyBody.appendChild(tr);
-  });
+function newTarget() {
+  targetScore = Math.floor(Math.random() * 169) + 2;
+  darts = [];
+  document.getElementById("target-display").textContent = targetScore;
+  updateDartsDisplay();
 }
 
-// --- small temporary message (non-blocking) ---
-function showTempMessage(msg, ms=1000) {
-  let box = document.getElementById('temp-msg-box');
-  if (!box) {
-    box = document.createElement('div');
-    box.id = 'temp-msg-box';
-    box.style.position = 'fixed';
-    box.style.right = '16px';
-    box.style.top = '16px';
-    box.style.background = 'rgba(0,0,0,0.7)';
-    box.style.color = '#fff';
-    box.style.padding = '8px 12px';
-    box.style.borderRadius = '8px';
-    box.style.zIndex = 9999;
-    document.body.appendChild(box);
-  }
-  box.textContent = msg;
-  box.style.display = 'block';
-  clearTimeout(box._timeoutId);
-  box._timeoutId = setTimeout(()=>{ box.style.display = 'none'; }, ms);
+function resetRound() {
+  newTarget();
 }
 
-// --- wire generate button & initial render ---
-document.addEventListener('DOMContentLoaded', () => {
-  // ensure DOM elements exist
-  if (!targetDisplay || !dartsDisplay || !scoreDisplay || !historyBody || !boardContainer) {
-    console.error('Missing required DOM elements. Make sure index.html includes target-display, darts-display, score-display, dartboard-container and history table.');
-    return;
-  }
+// Only 2 alternatives
+function getAlternatives(score) {
+  return ["T20 T20 D25", "T19 T14 D20"];
+}
 
-  renderBoard();
-  // auto-generate an initial target
-  document.getElementById('generate-target').click();
-});
+function addHistory(correct, lastVal) {
+  const tbody = document.querySelector("#history-table tbody");
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td>${targetScore}</td>
+    <td>${darts.join(", ")}</td>
+    <td>${correct ? "✔" : "✖"}</td>
+    <td>Standard Out</td>
+    <td>${getAlternatives(targetScore).join(" | ")}</td>
+  `;
+
+  tbody.prepend(row);
+}
+
+// ------------------------------
+// Init
+// ------------------------------
+
+createDartboard();
+newTarget();
+document.getElementById("generate-target").addEventListener("click", newTarget);
