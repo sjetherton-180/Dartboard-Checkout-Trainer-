@@ -31,6 +31,7 @@ body {
 
 .center-panel {
   flex: 0 0 450px;
+  height: 450px;  /* Maintain square */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,8 +39,8 @@ body {
 }
 
 #dartboard-container svg {
-  width: 100%;    /* Fill the center panel */
-  height: auto;   /* Maintain aspect ratio */
+  width: 400px;   /* Fixed width to match panel */
+  height: 400px;
   display: block;
 }
 
