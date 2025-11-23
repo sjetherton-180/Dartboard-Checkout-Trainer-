@@ -82,7 +82,7 @@ function createDartboard(){
     addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
 
     // --- Outer numbers pushed outward for visibility ---
-    const numberRadius = doubleOuter + 40; // Was 25
+    const numberRadius = doubleOuter + 15; // Was 25
     const angle = (startAngle + endAngle)/2;
     const pos = polarToCartesian(cx, cy, numberRadius, angle);
     const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
