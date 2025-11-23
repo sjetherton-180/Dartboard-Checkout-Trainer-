@@ -1,6 +1,6 @@
 // ------------------------------
-// Dart Checkout Trainer - Full Version
-// Corrected: 20 at top, numbers aligned, enlarged bulls clickable
+// Dart Checkout Trainer - Corrected
+// 20 centered, bulls enlarged and clickable
 // ------------------------------
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
@@ -62,10 +62,10 @@ function createDartboard(){
   const cx=200,cy=200;
   const totalSegments = segmentOrder.length;
   const segmentAngle=2*Math.PI/totalSegments;
-  const startOffset=-Math.PI/2 - segmentAngle/2; // center 20 at top
+  const startOffset=-Math.PI/2 - segmentAngle/2; // center 20
 
-  const singleOuter=160,singleInner=50,tripleInner=90,tripleOuter=110,doubleInner=140,doubleOuter=160;
-  const bullOuter=22,bullInner=10;
+  const singleOuter=160,singleInner=50,tripleInner=85,tripleOuter=115,doubleInner=130,doubleOuter=160;
+  const bullOuter=28,bullInner=16; // enlarged bulls
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
@@ -92,8 +92,8 @@ function createDartboard(){
     svg.appendChild(txt);
   });
 
-  addBull(svg,cx,cy,bullOuter,"green","SB"); // outer bull
-  addBull(svg,cx,cy,bullInner,"red","DB");   // inner bull
+  addBull(svg,cx,cy,bullOuter,"green","SB");
+  addBull(svg,cx,cy,bullInner,"red","DB");
 
   container.appendChild(svg);
 }
@@ -127,10 +127,10 @@ function hitSegment(num,mult,markerInfo){
     const marker=document.createElementNS("http://www.w3.org/2000/svg","circle");
     let radius;
     switch(markerInfo.ring){
-      case 'T': radius=(110+90)/2; break;
-      case 'D': radius=(160+140)/2; break;
-      case 'SB': radius=22/2; break;
-      case 'DB': radius=10/2; break;
+      case 'T': radius=(115+85)/2; break;
+      case 'D': radius=(160+130)/2; break;
+      case 'SB': radius=28/2; break;
+      case 'DB': radius=16/2; break;
       default: radius=(160+110)/2;
     }
     const pos=polarToCartesian(markerInfo.cx,markerInfo.cy,radius,markerInfo.angle||0);
