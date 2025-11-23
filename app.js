@@ -55,7 +55,36 @@ function describeArc(cx,cy,rOuter,rInner,startAngle,endAngle){
 }
 
 // --- Sound ---
-function beep(){if(!soundOn)return;try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator();osc.type="square";osc.frequency.value=600;osc.connect(ctx.destination);osc.start();setTimeout(()=>osc.stop(),80);}catch(e){}}
+let audioCtx;
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function beep() {
+    if (!soundOn) return;
+    if (!audioCtx) initAudio(); // ensure context exists
+
+    try {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = "square";
+        osc.frequency.value = 600;
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // reduce volume to avoid loud pops
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.08); // 80ms beep
+    } catch(e) {
+        console.error("Beep error:", e);
+    }
+}
+
+// --- Initialize audio on page load ---
+window.addEventListener("load", () => initAudio());
 
 // --- Dartboard ---
 function createDartboard(){
