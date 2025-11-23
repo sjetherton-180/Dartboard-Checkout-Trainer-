@@ -61,16 +61,16 @@ function beep(){if(!soundOn)return;try{const ctx=new (window.AudioContext||windo
 function createDartboard(){
   const container=document.getElementById("dartboard-container"); container.innerHTML="";
   const size=400; const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","0 0 400 400");
-  const cx=400,cy=200;
+  svg.setAttribute("width",size); svg.setAttribute("height",size); svg.setAttribute("viewBox","-40 -40 400 400");
+  const cx=200,cy=200;
   const totalSegments = segmentOrder.length;
   const segmentAngle=2*Math.PI/totalSegments;
   const startOffset=-Math.PI/2 - segmentAngle/2;
 
   const singleOuter=160,singleInner=50;
-  const tripleOuter=110,tripleInner=90;
-  const doubleOuter=190,doubleInner=170;
-  const bullOuter=35,bullInner=15; // Increased for larger clickable area
+  const tripleOuter=120,tripleInner=90;
+  const doubleOuter=190,doubleInner=160;
+  const bullOuter=40,bullInner=25; // Increased for larger clickable area
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
