@@ -1,111 +1,89 @@
-/* General body */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
   margin: 0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  font-family: Arial, sans-serif;
+  background: #071226;
+  color: #e6eef8;
 }
 
-/* Main container */
 .container {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: 30px;
+  justify-content: space-between;
+  padding: 20px;
 }
 
 /* Panels */
 .panel {
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
 }
 
-/* Left and Right panels */
 .left-panel, .right-panel {
-  flex: 0 0 180px;
-  min-width: 150px;
+  width: 150px;
 }
 
-/* Center panel with dartboard */
 .center-panel {
-  flex: 0 0 450px;
-  height: 450px;
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative;
 }
 
-/* SVG dartboard sizing */
-#dartboard-container svg {
+/* Dartboard */
+#dartboard-container {
   width: 400px;
   height: 400px;
 }
 
+#dartboard-container svg {
+  width: 100%;
+  height: 100%;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.clickable:hover {
+  transform: scale(1.05);
+}
+
 /* Buttons */
 .btn {
-  padding: 8px 15px;
-  font-size: 14px;
-  border: none;
+  margin-top: 10px;
+  padding: 6px 12px;
   border-radius: 6px;
-  background-color: #0077cc;
-  color: white;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.btn:hover {
-  background-color: #005fa3;
-}
-
-/* Result box */
-#result-box {
-  font-size: 32px;
-  height: 40px;
-  margin-top: 10px;
-}
-
-/* History table */
-.history-container {
-  width: 90%;
-  max-width: 900px;
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-#history-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 10px;
-}
-
-#history-table th, #history-table td {
-  padding: 8px 20px;
-  text-align: center;
-  border-bottom: 1px solid #ddd;
-}
-
-#history-table th {
-  background-color: #f2f2f2;
+  border: none;
+  background-color: #f59e0b;
+  color: #071226;
   font-weight: bold;
+  cursor: pointer;
 }
 
-#history-table tr:hover {
-  background-color: #f9f9f9;
+/* Darts display */
+#darts-display {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* Target and darts spacing */
-#target-display, #score-display, #darts-display {
-  font-size: 24px;
-  margin: 10px 0;
+/* History Table */
+.history-container {
+  margin: 20px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #94a3b8;
+  padding: 4px 6px;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background: #07182a;
 }
