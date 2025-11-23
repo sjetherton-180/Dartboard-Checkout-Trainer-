@@ -34,6 +34,13 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+#dartboard-container svg {
+  width: 100%;    /* Fill the center panel */
+  height: auto;   /* Maintain aspect ratio */
+  display: block;
 }
 
 .btn {
