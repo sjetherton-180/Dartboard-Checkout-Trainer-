@@ -1,163 +1,315 @@
-// ----------------------------
-// Dartboard Checkout Trainer
-// VERSION 1.0 — Stable Baseline
-// ----------------------------
+// ------------------------------
+// Dartboard + Checkout Trainer — Dart Markers + Highlight
+// ------------------------------
 
-const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const segmentOrder = [
+  20, 1, 18, 4, 13, 6, 10, 15, 2, 17,
+  3, 19, 7, 16, 8, 11, 14, 9, 12, 5
+];
+
 let targetScore = 0;
 let darts = [];
 let score = 0;
-let soundOn = true;
+let soundOn = true; // Mute toggle
+let dartMarkers = []; // Store SVG marker elements
 
-// Winmau preferred outs map
-const preferredOuts = {
-  170:"T20,T20,DB", 169:"T20,T19,DB", 168:"T20,T20,D24", 167:"T20,T19,D25", 166:"T20,T18,DB",
-  165:"T20,T19,D24", 164:"T20,T16,DB", 163:"T20,T17,DB", 162:"T20,T14,DB", 161:"T20,T17,D20",
-  160:"T20,T20,D20", 159:"T19,T16,DB", 158:"T20,T20,D19", 157:"T20,T19,D20", 156:"T20,T20,D18",
-  155:"T20,T19,D19", 154:"T20,T18,D20", 153:"T20,T19,D18", 152:"T20,T20,D16", 151:"T20,T17,D20",
-  150:"T20,T18,D18", 149:"T20,T19,D16", 148:"T20,T16,D20", 147:"T20,T17,D18", 146:"T20,T18,D16",
-  145:"T20,T15,D20", 144:"T20,T20,D12", 143:"T20,T17,D16", 142:"T20,T14,D20", 141:"T20,T19,D12",
-  140:"T20,T20,D10", 139:"T19,T14,D20", 138:"T20,T18,D12", 137:"T20,T19,D10", 136:"T20,T20,D8",
-  135:"T20,T15,D20", 134:"T20,T14,D20", 133:"T20,T19,D8", 132:"T20,T16,D20", 131:"T20,T13,D20",
-  130:"T20,T20,D5", 129:"T19,T16,D12", 128:"T18,T14,D20", 127:"T20,T17,D8", 126:"T19,T19,D6",
-  125:"T20,T15,D10", 124:"T20,T12,D16", 123:"T19,T16,D9", 122:"T18,T14,D16", 121:"T20,T11,D14",
-  120:"T20,20,D20", 119:"T19,10,D20", 118:"T20,18,D20", 117:"T20,17,D20", 116:"T20,16,D20",
-  115:"T20,15,D20", 114:"T20,14,D20", 113:"T20,13,D20", 112:"T20,12,D20", 111:"T20,11,D20",
-  110:"T20,10,D20", 109:"T20,9,D20", 108:"T20,8,D20", 107:"T19,10,D20", 106:"T20,6,D20",
-  105:"T20,5,D20", 104:"T18,18,D16", 103:"T20,3,D20", 102:"T20,10,D16", 101:"T17,10,D20",
-  100:"T20,D20", 99:"T19,10,D16", 98:"T20,D19", 97:"T19,D20", 96:"T20,D18", 95:"T19,D19",
-  94:"T18,D20", 93:"T19,D18", 92:"T20,D16", 91:"T17,D20", 90:"T18,D18", 89:"T19,D16", 88:"T16,D20",
-  87:"T17,D18", 86:"T18,D16", 85:"T15,D20", 84:"T20,D12", 83:"T17,D16", 82:"T14,D20", 81:"T19,D12",
-  80:"T20,D10", 79:"T13,D20", 78:"T18,D12", 77:"T19,D10", 76:"T20,D8", 75:"T17,D12", 74:"T14,D16",
-  73:"T19,D8", 72:"T16,D12", 71:"T13,D16", 70:"T18,D8", 69:"T19,D6", 68:"T20,D4", 67:"T17,D8",
-  66:"T10,D18", 65:"T19,D4", 64:"T16,D8", 63:"T13,D12", 62:"T10,D16", 61:"T15,D8", 60:"20,D20",
-  59:"19,D20", 58:"18,D20", 57:"17,D20", 56:"16,D20", 55:"15,D20", 54:"14,D20", 53:"13,D20",
-  52:"20,D16", 51:"19,D16", 50:"10,D20", 49:"17,D16", 48:"16,D16", 47:"15,D16", 46:"14,D16",
-  45:"13,D16", 44:"12,D16", 43:"11,D16", 42:"10,D16", 41:"9,D16", 40:"D20"
-};
-
-// --- Helpers for SVG Drawing ---
-
-function polarToCartesian(cx, cy, radius, angle) {
-  const rad = (angle-90) * Math.PI/180.0;
-  return {x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad)};
+// --- Precompute hits ---
+const hits = [];
+for (let n = 1; n <= 20; n++) {
+  hits.push({ code: `S${n}`, value: n, isDouble: false, base: n });
+  hits.push({ code: `D${n}`, value: n * 2, isDouble: true, base: n });
+  hits.push({ code: `T${n}`, value: n * 3, isDouble: false, base: n });
 }
+hits.push({ code: 'SB', value: 25, isDouble: false, base: 25 });
+hits.push({ code: 'DB', value: 50, isDouble: true, base: 25 });
 
-function describeArc(cx, cy, r, startAngle, endAngle) {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
-}
+// --- Generate all 3-dart checkouts ---
+const MAX_TARGET = 170;
+const checkouts = {};
+for (let t = 2; t <= MAX_TARGET; t++) checkouts[t] = [];
 
-// --- Draw Dartboard ---
-const dartboardContainer = document.getElementById('dartboard-container');
-
-function createDartboard() {
-  dartboardContainer.innerHTML = '';
-  const size = 400;
-  const svgNS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgNS,'svg');
-  svg.setAttribute('width',size);
-  svg.setAttribute('height',size);
-  svg.setAttribute('viewBox','0 0 400 400');
-
-  const cx = 200;
-  const cy = 200;
-  const outerRadius = 200;
-  const doubleRadius = 180;
-  const trebleRadius = 120;
-  const bullRadius = 12;
-  const outerBullRadius = 24;
-
-  // Segments
-  segmentOrder.forEach((num,i)=>{
-    const startAngle = i*18;
-    const endAngle = startAngle+18;
-    const color = (i%2===0)?'#000':'#fff';
-    const path = document.createElementNS(svgNS,'path');
-    path.setAttribute('d',describeArc(cx,cy,doubleRadius,startAngle,endAngle));
-    path.setAttribute('fill',color);
-    path.setAttribute('stroke','#000');
-    path.setAttribute('stroke-width','1');
-    path.dataset.value = num;
-    path.dataset.type = 'single';
-    path.addEventListener('click',()=>hitSegment(num,'S'));
-    svg.appendChild(path);
-  });
-
-  // Bull
-  const outerBull = document.createElementNS(svgNS,'circle');
-  outerBull.setAttribute('cx',cx);
-  outerBull.setAttribute('cy',cy);
-  outerBull.setAttribute('r',outerBullRadius);
-  outerBull.setAttribute('fill','#00FF00');
-  outerBull.dataset.value = 25;
-  outerBull.dataset.type = 'S';
-  outerBull.addEventListener('click',()=>hitSegment(25,'S'));
-  svg.appendChild(outerBull);
-
-  const bull = document.createElementNS(svgNS,'circle');
-  bull.setAttribute('cx',cx);
-  bull.setAttribute('cy',cy);
-  bull.setAttribute('r',bullRadius);
-  bull.setAttribute('fill','#FF0000');
-  bull.dataset.value = 50;
-  bull.dataset.type = 'D';
-  bull.addEventListener('click',()=>hitSegment(50,'D'));
-  svg.appendChild(bull);
-
-  dartboardContainer.appendChild(svg);
-}
-
-// --- Handle Dart Hit ---
-function hitSegment(value,type){
-  if(darts.length>=3) return;
-  darts.push({value,type});
-  updateDartsDisplay();
-
-  // Check if target reached
-  let total = darts.reduce((a,b)=>a+b.value,0);
-  if(total===targetScore && type==='D'){
-    indicateResult(true);
-    score++;
-  } else if(darts.length===3){
-    indicateResult(false);
+for (const a of hits) {
+  if (a.value <= MAX_TARGET && a.isDouble) checkouts[a.value].push([a]);
+  for (const b of hits) {
+    const sum2 = a.value + b.value;
+    if (sum2 <= MAX_TARGET && b.isDouble) checkouts[sum2].push([a, b]);
+    for (const c of hits) {
+      const sum3 = a.value + b.value + c.value;
+      if (sum3 <= MAX_TARGET && c.isDouble) checkouts[sum3].push([a, b, c]);
+    }
   }
 }
 
-// --- Update Darts Display ---
-function updateDartsDisplay(){
-  const dartsDisplay = document.getElementById('darts-display');
-  dartsDisplay.innerHTML = darts.map(d=>`${d.type}${d.value}`).join(', ');
-  const totalDisplay = document.getElementById('score-display');
-  totalDisplay.textContent = darts.reduce((a,b)=>a+b.value,0);
+// Remove duplicate combos
+for (let t = 2; t <= MAX_TARGET; t++) {
+  const seen = new Set();
+  const uniq = [];
+  for (const combo of checkouts[t]) {
+    const key = combo.map(h => h.code).join(',');
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniq.push(combo);
+    }
+  }
+  checkouts[t] = uniq;
 }
 
-// --- Indicate Result ---
-function indicateResult(correct){
-  const resultBox = document.getElementById('result-box');
-  resultBox.textContent = correct ? '✔' : '✖';
+// --- Utilities ---
+function polarToCartesian(cx, cy, r, angle) {
+  return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
 }
 
-// --- New Target ---
-function newTarget(){
-  targetScore = Math.floor(Math.random()*169)+2;
-  document.getElementById('target-display').textContent = targetScore;
+function describeArc(cx, cy, rOuter, startAngle, endAngle, rInner) {
+  const p1 = polarToCartesian(cx, cy, rOuter, startAngle);
+  const p2 = polarToCartesian(cx, cy, rOuter, endAngle);
+  const p3 = polarToCartesian(cx, cy, rInner, endAngle);
+  const p4 = polarToCartesian(cx, cy, rInner, startAngle);
+  const largeArc = (endAngle - startAngle) <= Math.PI ? 0 : 1;
+  return `
+    M ${p1.x} ${p1.y}
+    A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y}
+    L ${p3.x} ${p3.y}
+    A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y}
+    Z
+  `;
+}
+
+function beep() {
+  if (!soundOn) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.value = 600;
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), 80);
+  } catch (e) {}
+}
+
+// --- Create Dartboard ---
+function createDartboard() {
+  const container = document.getElementById("dartboard-container");
+  container.innerHTML = "";
+
+  const size = 600;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "-60 -60 520 520");
+  svg.setAttribute("width", size);
+  svg.setAttribute("height", size);
+
+  const cx = 200, cy = 200;
+  const singleOuter = 162;
+  const singleInner = 40;
+  const tripleInner = 95;
+  const tripleOuter = 115;
+  const doubleInner = 150;
+  const doubleOuter = 185;
+
+  // Bulls increased proportionally
+  const bullOuter = 20;
+  const bullInner = 10;
+
+  const segmentAngle = 2 * Math.PI / 20;
+
+  segmentOrder.forEach((num, i) => {
+    const centerAngle = i * segmentAngle - Math.PI / 2;
+    const a1 = centerAngle - segmentAngle / 2;
+    const a2 = centerAngle + segmentAngle / 2;
+
+    // Helper function to highlight segment
+    const highlightSegment = (el) => {
+      const orig = el.getAttribute("fill");
+      el.setAttribute("fill", "#ffff99");
+      setTimeout(() => el.setAttribute("fill", orig), 200);
+    };
+
+    // Single Outer
+    const pathS = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathS.setAttribute("d", describeArc(cx, cy, singleOuter, a1, a2, tripleOuter));
+    pathS.setAttribute("fill", i % 2 === 0 ? "#eee" : "#ccc");
+    pathS.style.cursor = "pointer";
+    pathS.addEventListener("click", () => {
+      highlightSegment(pathS);
+      hitSegment(num, 1, {cx, cy, angle: centerAngle, ring: 'S'});
+    });
+    svg.appendChild(pathS);
+
+    // Triple
+    const pathT = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathT.setAttribute("d", describeArc(cx, cy, tripleOuter, a1, a2, tripleInner));
+    pathT.setAttribute("fill", i % 2 === 0 ? "#ff6666" : "#66ff66");
+    pathT.style.cursor = "pointer";
+    pathT.addEventListener("click", () => {
+      highlightSegment(pathT);
+      hitSegment(num, 3, {cx, cy, angle: centerAngle, ring: 'T'});
+    });
+    svg.appendChild(pathT);
+
+    // Single Inner
+    const pathSi = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathSi.setAttribute("d", describeArc(cx, cy, tripleInner, a1, a2, singleInner));
+    pathSi.setAttribute("fill", i % 2 === 0 ? "#eee" : "#ccc");
+    pathSi.style.cursor = "pointer";
+    pathSi.addEventListener("click", () => {
+      highlightSegment(pathSi);
+      hitSegment(num, 1, {cx, cy, angle: centerAngle, ring: 'S'});
+    });
+    svg.appendChild(pathSi);
+
+    // Double
+    const pathD = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathD.setAttribute("d", describeArc(cx, cy, doubleOuter, a1, a2, doubleInner));
+    pathD.setAttribute("fill", i % 2 === 0 ? "#cc0000" : "#009900");
+    pathD.style.cursor = "pointer";
+    pathD.addEventListener("click", () => {
+      highlightSegment(pathD);
+      hitSegment(num, 2, {cx, cy, angle: centerAngle, ring: 'D'});
+    });
+    svg.appendChild(pathD);
+  });
+
+  // Bulls
+  const bullOut = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  bullOut.setAttribute("cx", cx);
+  bullOut.setAttribute("cy", cy);
+  bullOut.setAttribute("r", bullOuter);
+  bullOut.setAttribute("fill", "green");
+  bullOut.style.cursor = "pointer";
+  bullOut.addEventListener("click", () => hitSegment(25, 1, {cx, cy, ring: 'SB'}));
+  svg.appendChild(bullOut);
+
+  const bullIn = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  bullIn.setAttribute("cx", cx);
+  bullIn.setAttribute("cy", cy);
+  bullIn.setAttribute("r", bullInner);
+  bullIn.setAttribute("fill", "red");
+  bullIn.style.cursor = "pointer";
+  bullIn.addEventListener("click", () => hitSegment(25, 2, {cx, cy, ring: 'DB'}));
+  svg.appendChild(bullIn);
+
+  // Outer number ring pushed further out
+  const numberRadius = doubleOuter + 20;
+  segmentOrder.forEach((num, i) => {
+    const angle = i * segmentAngle - Math.PI / 2;
+    const pos = polarToCartesian(cx, cy, numberRadius, angle);
+    const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    txt.setAttribute("x", pos.x);
+    txt.setAttribute("y", pos.y + 6);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("font-size", "18");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("fill", "#FFD700");
+    txt.setAttribute("stroke", "black");
+    txt.setAttribute("stroke-width", "1");
+    txt.style.userSelect = "none";
+    txt.textContent = num;
+    svg.appendChild(txt);
+  });
+
+  container.appendChild(svg);
+}
+
+// --- Game Logic with Dart Markers ---
+function hitSegment(num, mult, markerInfo) {
+  if (darts.length >= 3) return;
+
+  const val = num * mult;
+  darts.push(val);
+  beep();
+  updateDartsDisplay();
+
+  // Add dart marker
+  if (markerInfo) {
+    const svg = document.querySelector("#dartboard-container svg");
+    const r = 6;
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    const radius = markerInfo.ring === 'D' ? (markerInfo.ring === 'D'? 0.5 : 0.5) : 0;
+    const pos = polarToCartesian(markerInfo.cx, markerInfo.cy,
+      markerInfo.ring==='T'? (tripleOuter + tripleInner)/2 :
+      markerInfo.ring==='D'? (doubleOuter + doubleInner)/2 :
+      markerInfo.ring==='SB'? bullOuter/2 :
+      markerInfo.ring==='DB'? bullInner/2 : singleOuter/2,
+      markerInfo.angle);
+    marker.setAttribute("cx", pos.x);
+    marker.setAttribute("cy", pos.y);
+    marker.setAttribute("r", r);
+    marker.setAttribute("fill", "orange");
+    marker.setAttribute("stroke", "black");
+    marker.setAttribute("stroke-width", "1");
+    svg.appendChild(marker);
+    dartMarkers.push(marker);
+  }
+
+  const total = darts.reduce((a, b) => a + b, 0);
+  const combos = checkouts[targetScore] || [];
+  const standardCombo = combos.length > 0 ? combos[0] : null;
+  const standardCodes = standardCombo ? standardCombo.map(h => h.code).join(', ') : '(none)';
+
+  if (total === targetScore && mult === 2) {
+    score++;
+    addHistory(true, standardCodes, total);
+    resetRound();
+  } else if (total > targetScore || darts.length === 3) {
+    score--;
+    addHistory(false, standardCodes, total);
+    resetRound();
+  }
+
+  updateScore();
+}
+
+// --- Display / History ---
+function updateDartsDisplay() {
+  document.getElementById("darts-display").textContent = darts.join(", ");
+}
+
+function updateScore() {
+  document.getElementById("score-display").textContent = String(score);
+}
+
+function newTarget() {
+  targetScore = Math.floor(Math.random() * 169) + 2;
   darts = [];
   updateDartsDisplay();
-  document.getElementById('result-box').textContent = '';
+  document.getElementById("target-display").textContent = String(targetScore);
+
+  // Remove previous markers
+  dartMarkers.forEach(m => m.remove());
+  dartMarkers = [];
 }
 
-// --- Mute Toggle ---
-document.getElementById('mute-btn').addEventListener('click',()=>{
-  soundOn=!soundOn;
-  document.getElementById('mute-btn').textContent = soundOn?'Mute':'Unmute';
-});
+function resetRound() { newTarget(); }
 
-// --- Generate New Target ---
-document.getElementById('generate-target').addEventListener('click',newTarget);
+function addHistory(correct, standard, total) {
+  const tbody = document.querySelector("#history-table tbody");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${targetScore}</td>
+    <td>${darts.join(", ")}</td>
+    <td>${total}</td>
+    <td>${correct ? "✔" : "✖"}</td>
+    <td>${standard}</td>
+  `;
+  tbody.prepend(tr);
+}
 
-// --- Init ---
+// --- Mute toggle ---
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById("mute-btn").textContent = soundOn ? "Mute" : "Unmute";
+}
+
+// --- Initialization ---
 createDartboard();
 newTarget();
+document.getElementById("generate-target").addEventListener("click", newTarget);
+
+// Add mute button dynamically
+const leftPanel = document.querySelector(".left-panel");
+const muteBtn = document.createElement("button");
+muteBtn.id = "mute-btn";
+muteBtn.className = "btn";
+muteBtn.textContent = "Mute";
+muteBtn.addEventListener("click", toggleSound);
+leftPanel.appendChild(muteBtn);
