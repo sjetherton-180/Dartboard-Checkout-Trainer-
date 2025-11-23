@@ -1,9 +1,9 @@
-// Dart Checkout Trainer - Full Updated with Visible Outer Numbers
+// Dart Checkout Trainer - Version 1.1 (Visual Enhancements)
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let targetScore = 0, darts = [], score = 0, dartMarkers = [], soundOn = true;
 
-// --- Winmau / YourDarts Preferred Outs 170→40 ---
+// --- Winmau Preferred Outs 170→40 ---
 const preferredOuts = {
   170:["T20","T20","Bull"],167:["T20","T19","Bull"],164:["T20","T18","Bull"],
   161:["T20","T17","Bull"],160:["T20","T20","D20"],158:["T20","T20","D19"],
@@ -68,9 +68,9 @@ function createDartboard(){
   const startOffset=-Math.PI/2 - segmentAngle/2;
 
   const singleOuter=160,singleInner=50;
-  const tripleOuter=120,tripleInner=90;
+  const tripleOuter=130,tripleInner=90;
   const doubleOuter=190,doubleInner=160;
-  const bullOuter=40,bullInner=25; // Enlarged for easier clicking
+  const bullOuter=45,bullInner=30;
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
@@ -81,8 +81,8 @@ function createDartboard(){
     addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
     addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
 
-    // --- Outer numbers pushed outward for visibility ---
-    const numberRadius = doubleOuter + 15; // Was 25
+    // --- Outer numbers ---
+    const numberRadius = doubleOuter + 15;
     const angle = (startAngle + endAngle)/2;
     const pos = polarToCartesian(cx, cy, numberRadius, angle);
     const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
@@ -90,11 +90,11 @@ function createDartboard(){
     txt.setAttribute("y", pos.y);
     txt.setAttribute("text-anchor", "middle");
     txt.setAttribute("dominant-baseline", "middle");
-    txt.setAttribute("font-size", "16");
+    txt.setAttribute("font-size", "18");
     txt.setAttribute("font-weight", "bold");
     txt.setAttribute("fill", "#FFD700");
     txt.setAttribute("stroke", "black");
-    txt.setAttribute("stroke-width", "1");
+    txt.setAttribute("stroke-width", "1.5");
     txt.textContent=num;
     svg.appendChild(txt);
   });
@@ -105,14 +105,22 @@ function createDartboard(){
   container.appendChild(svg);
 }
 
+// --- Add Segment ---
 function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,ringType,num,mult){
   const path=document.createElementNS("http://www.w3.org/2000/svg","path");
   path.setAttribute("d",describeArc(cx,cy,rOuter,rInner,startAngle,endAngle));
-  path.setAttribute("fill",color); path.style.cursor="pointer";
+  path.setAttribute("fill",color);
+  path.style.cursor="pointer";
+
+  // Hover highlight
+  path.addEventListener("mouseenter",()=>path.setAttribute("fill",lightenColor(color,0.3)));
+  path.addEventListener("mouseleave",()=>path.setAttribute("fill",color));
+
   path.addEventListener("click",()=>hitSegment(num,mult,{cx,cy,ring:ringType,angle:(startAngle+endAngle)/2,rOuter,rInner}));
   svg.appendChild(path);
 }
 
+// --- Add Bull ---
 function addBull(svg, cx, cy, r, color, ringType){
   const bull = document.createElementNS("http://www.w3.org/2000/svg","circle");
   bull.setAttribute("cx", cx);
@@ -129,10 +137,18 @@ function addBull(svg, cx, cy, r, color, ringType){
   svg.appendChild(bull);
 }
 
+// --- Lighten color ---
+function lightenColor(color, percent){
+  const f = parseInt(color.slice(1),16), t = percent < 0 ? 0 : 255, p=Math.abs(percent);
+  const R=f>>16, G=f>>8&0x00FF, B=f&0x0000FF;
+  return "#" + (0x1000000 + (Math.round((t-R)*p)+R)*0x10000 + (Math.round((t-G)*p)+G)*0x100 + (Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
+
 // --- Hit Segment ---
 function hitSegment(num,mult,markerInfo){
   if(darts.length>=3) return;
-  const val=num*mult; darts.push(val); beep(); updateDartsDisplay();
+  const val=num*mult;
+  darts.push(val); beep(); updateDartsDisplay();
 
   if(markerInfo){
     const svg=document.querySelector("#dartboard-container svg");
