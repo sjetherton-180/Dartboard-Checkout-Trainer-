@@ -67,10 +67,10 @@ function createDartboard(){
   const segmentAngle=2*Math.PI/totalSegments;
   const startOffset=-Math.PI/2 - segmentAngle/2;
 
-  const singleOuter=160,singleInner=50;
-  const tripleOuter=120,tripleInner=90;
-  const doubleOuter=190,doubleInner=160;
-  const bullOuter=40,bullInner=25; // Enlarged for easier clicking
+  const singleOuter=160,singleInner=40;
+  const tripleOuter=120,tripleInner=100;
+  const doubleOuter=180,doubleInner=160;
+  const bullOuter=40,bullInner=15; // Enlarged for easier clicking
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
