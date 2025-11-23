@@ -1,5 +1,5 @@
 // ------------------------------
-// Dart Checkout Trainer - Full Version (Corrected Segment Rotation)
+// Dart Checkout Trainer - Full Version (Corrected Numbers & Bigger Bulls)
 // ------------------------------
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
@@ -61,7 +61,7 @@ function createDartboard(){
   const cx=200,cy=200;
   const segmentAngle=2*Math.PI/20;
   const singleOuter=160,singleInner=50,tripleInner=90,tripleOuter=110,doubleInner=140,doubleOuter=160;
-  const bullOuter=15,bullInner=7;
+  const bullOuter=22,bullInner=10; // enlarged bulls
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=-Math.PI/2 + i*segmentAngle;
@@ -76,14 +76,19 @@ function createDartboard(){
   addBull(svg,cx,cy,bullInner,"red","DB");
 
   // Outer numbers
-  const numberRadius=doubleOuter+20;
+  const numberRadius=doubleOuter+25;
   segmentOrder.forEach((num,i)=>{
-    const angle=-Math.PI/2 + i*segmentAngle + segmentAngle/2;
+    const angle=-Math.PI/2 + i * segmentAngle + segmentAngle/2;
     const pos=polarToCartesian(cx,cy,numberRadius,angle);
     const txt=document.createElementNS("http://www.w3.org/2000/svg","text");
-    txt.setAttribute("x",pos.x); txt.setAttribute("y",pos.y+6);
-    txt.setAttribute("text-anchor","middle"); txt.setAttribute("font-size","16");
-    txt.setAttribute("font-weight","bold"); txt.setAttribute("fill","#FFD700"); txt.textContent=num;
+    txt.setAttribute("x", pos.x);
+    txt.setAttribute("y", pos.y);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("dominant-baseline", "middle");
+    txt.setAttribute("font-size", "16");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("fill", "#FFD700");
+    txt.textContent=num;
     svg.appendChild(txt);
   });
 
@@ -117,8 +122,8 @@ function hitSegment(num,mult,markerInfo){
     let radius; switch(markerInfo.ring){
       case 'T': radius=(110+90)/2; break;
       case 'D': radius=(160+140)/2; break;
-      case 'SB': radius=15/2; break;
-      case 'DB': radius=7/2; break;
+      case 'SB': radius=22/2; break; // match outer bull
+      case 'DB': radius=10/2; break;  // match inner bull
       default: radius=(160+110)/2;
     }
     const pos=polarToCartesian(markerInfo.cx,markerInfo.cy,radius,markerInfo.angle);
