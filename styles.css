@@ -11,9 +11,10 @@ body {
 .container {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   gap: 20px;
-  margin-bottom: 30px;
   flex-wrap: wrap;
+  margin-bottom: 30px;
 }
 
 .panel {
@@ -21,17 +22,17 @@ body {
   padding: 15px;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  min-width: 150px;
   text-align: center;
 }
 
 .left-panel, .right-panel {
   flex: 0 0 180px;
+  min-width: 150px;
 }
 
 .center-panel {
   flex: 0 0 450px;
-  height: 450px;  /* Maintain square */
+  height: 450px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -39,7 +40,7 @@ body {
 }
 
 #dartboard-container svg {
-  width: 400px;   /* Fixed width to match panel */
+  width: 400px;
   height: 400px;
   display: block;
 }
@@ -57,6 +58,10 @@ body {
 
 .btn:hover {
   background-color: #005fa3;
+}
+
+#score-section {
+  margin-top: 20px;
 }
 
 .history-container {
@@ -87,4 +92,10 @@ body {
 
 #history-table tr:hover {
   background-color: #f9f9f9;
+}
+
+#result-box {
+  font-size: 32px;
+  height: 40px;
+  margin-top: 10px;
 }
