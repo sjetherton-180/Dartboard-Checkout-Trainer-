@@ -42,7 +42,6 @@ body {
 #dartboard-container svg {
   width: 400px;
   height: 400px;
-  display: block;
 }
 
 .btn {
@@ -60,8 +59,10 @@ body {
   background-color: #005fa3;
 }
 
-#score-section {
-  margin-top: 20px;
+#result-box {
+  font-size: 32px;
+  height: 40px;
+  margin-top: 10px;
 }
 
 .history-container {
@@ -92,10 +93,4 @@ body {
 
 #history-table tr:hover {
   background-color: #f9f9f9;
-}
-
-#result-box {
-  font-size: 32px;
-  height: 40px;
-  margin-top: 10px;
 }
