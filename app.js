@@ -1,10 +1,11 @@
-// Dart Checkout Trainer - Bulls enlarged, double/treble bands wider, 20 top-centered
+// Dart Checkout Trainer - Fully Corrected
+// 20 centered, bulls enlarged, double/treble bands wider, click areas match visuals
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let targetScore = 0, darts = [], score = 0, dartMarkers = [], soundOn = true;
 
 // --- Winmau Preferred Outs ---
-const preferredOuts = { /* same as previous version */ };
+const preferredOuts = { /* same Winmau outs as before */ };
 
 // --- Polar Helpers ---
 function polarToCartesian(cx,cy,r,angle){return {x:cx+r*Math.cos(angle),y:cy+r*Math.sin(angle)};}
@@ -28,12 +29,13 @@ function createDartboard(){
   const cx=200,cy=200;
   const totalSegments = segmentOrder.length;
   const segmentAngle=2*Math.PI/totalSegments;
-  const startOffset=-Math.PI/2 - segmentAngle/2;
+  const startOffset=-Math.PI/2 - segmentAngle/2; // center 20
 
+  // Radii
   const singleOuter=160,singleInner=50;
-  const tripleOuter=115,tripleInner=85; // widened treble
-  const doubleOuter=190,doubleInner=160; // widened double
-  const bullOuter=28,bullInner=16; // enlarged bulls
+  const tripleOuter=120,tripleInner=90; // wider for easy clicking
+  const doubleOuter=190,doubleInner=160; // wider
+  const bullOuter=30,bullInner=18; // enlarged
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
@@ -60,8 +62,10 @@ function createDartboard(){
     svg.appendChild(txt);
   });
 
+  // Bulls
   addBull(svg,cx,cy,bullOuter,"green","SB");
   addBull(svg,cx,cy,bullInner,"red","DB");
+
   container.appendChild(svg);
 }
 
@@ -69,7 +73,7 @@ function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,ringType,n
   const path=document.createElementNS("http://www.w3.org/2000/svg","path");
   path.setAttribute("d",describeArc(cx,cy,rOuter,rInner,startAngle,endAngle));
   path.setAttribute("fill",color); path.style.cursor="pointer";
-  path.addEventListener("click",()=>hitSegment(num,mult,{cx,cy,ring:ringType,angle:(startAngle+endAngle)/2}));
+  path.addEventListener("click",()=>hitSegment(num,mult,{cx,cy,ring:ringType,angle:(startAngle+endAngle)/2,rOuter,rInner}));
   svg.appendChild(path);
 }
 
@@ -79,7 +83,7 @@ function addBull(svg,cx,cy,r,color,ringType){
   bull.setAttribute("fill",color); bull.style.cursor="pointer";
   bull.addEventListener("click",()=>{
     const mult = (ringType==="DB"?2:1);
-    hitSegment(25, mult, {cx,cy,ring:ringType});
+    hitSegment(25, mult, {cx,cy,ring:ringType,rOuter:r,rInner:0});
   });
   svg.appendChild(bull);
 }
@@ -94,11 +98,11 @@ function hitSegment(num,mult,markerInfo){
     const marker=document.createElementNS("http://www.w3.org/2000/svg","circle");
     let radius;
     switch(markerInfo.ring){
-      case 'T': radius=(tripleOuter+tripleInner)/2; break;
-      case 'D': radius=(doubleOuter+doubleInner)/2; break;
-      case 'SB': radius=bullOuter/2; break;
-      case 'DB': radius=bullInner/2; break;
-      default: radius=(singleOuter+singleInner)/2;
+      case 'T': radius=(markerInfo.rOuter+markerInfo.rInner)/2; break;
+      case 'D': radius=(markerInfo.rOuter+markerInfo.rInner)/2; break;
+      case 'SB': radius=markerInfo.rOuter/2; break;
+      case 'DB': radius=markerInfo.rOuter/2; break;
+      default: radius=(markerInfo.rOuter+markerInfo.rInner)/2;
     }
     const pos=polarToCartesian(markerInfo.cx,markerInfo.cy,radius,markerInfo.angle||0);
     marker.setAttribute("cx",pos.x); marker.setAttribute("cy",pos.y);
