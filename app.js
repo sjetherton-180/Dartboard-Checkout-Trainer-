@@ -33,39 +33,29 @@ const preferredOuts = {
 45:"13,D16",44:"12,D16",43:"11,D16",42:"10,D16",41:"9,D16",40:"D20"
 };
 
-// --- Helper functions ---
-function polarToCartesian(cx, cy, r, angle){
-    return {x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle)};
-}
-
+// --- Helpers ---
+function polarToCartesian(cx, cy, r, angle){return {x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle)};}
 function describeArc(cx, cy, rOuter, rInner, startAngle, endAngle){
     const p1 = polarToCartesian(cx, cy, rOuter, startAngle);
     const p2 = polarToCartesian(cx, cy, rOuter, endAngle);
     const p3 = polarToCartesian(cx, cy, rInner, endAngle);
     const p4 = polarToCartesian(cx, cy, rInner, startAngle);
-    const largeArc = (endAngle - startAngle) <= Math.PI ? 0 : 1;
+    const largeArc = (endAngle-startAngle)<=Math.PI?0:1;
     return `M${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y} Z`;
 }
-
-function beep(){ if(!soundOn) return; try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const osc=ctx.createOscillator(); osc.type="square"; osc.frequency.value=600; osc.connect(ctx.destination); osc.start(); setTimeout(()=>osc.stop(),80); }catch(e){} }
+function beep(){if(!soundOn) return; try{const ctx=new (window.AudioContext||window.webkitAudioContext)(); const osc=ctx.createOscillator(); osc.type="square"; osc.frequency.value=600; osc.connect(ctx.destination); osc.start(); setTimeout(()=>osc.stop(),80);}catch(e){}}
 
 // --- Dartboard ---
 function createDartboard(){
-    const container = document.getElementById("dartboard-container");
-    container.innerHTML="";
-    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("width","400");
-    svg.setAttribute("height","400");
-    svg.setAttribute("viewBox","0 0 400 400");
+    const container=document.getElementById("dartboard-container"); container.innerHTML="";
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("width","400"); svg.setAttribute("height","400"); svg.setAttribute("viewBox","0 0 400 400");
     const cx=200, cy=200;
     const totalSegments = segmentOrder.length;
     const segmentAngle = 2*Math.PI/totalSegments;
     const startOffset=-Math.PI/2 - segmentAngle/2;
 
-    const singleOuter=160, singleInner=50;
-    const tripleOuter=120,tripleInner=90;
-    const doubleOuter=190,doubleInner=160;
-    const bullOuter=40,bullInner=25;
+    const singleOuter=160,singleInner=50,tripleOuter=120,tripleInner=90,doubleOuter=190,doubleInner=160,bullOuter=40,bullInner=25;
 
     segmentOrder.forEach((num,i)=>{
         const startAngle=startOffset + i*segmentAngle;
@@ -78,29 +68,22 @@ function createDartboard(){
         const numberRadius = doubleOuter+50;
         const angle = (startAngle+endAngle)/2;
         const pos = polarToCartesian(cx,cy,numberRadius,angle);
-        const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+        const txt=document.createElementNS("http://www.w3.org/2000/svg","text");
         txt.setAttribute("x",pos.x); txt.setAttribute("y",pos.y);
-        txt.setAttribute("text-anchor","middle");
-        txt.setAttribute("dominant-baseline","middle");
-        txt.setAttribute("font-size","16");
-        txt.setAttribute("font-weight","bold");
-        txt.setAttribute("fill","#FFD700");
-        txt.setAttribute("stroke","black");
-        txt.setAttribute("stroke-width","1");
-        txt.textContent=num;
-        svg.appendChild(txt);
+        txt.setAttribute("text-anchor","middle"); txt.setAttribute("dominant-baseline","middle");
+        txt.setAttribute("font-size","16"); txt.setAttribute("font-weight","bold");
+        txt.setAttribute("fill","#FFD700"); txt.setAttribute("stroke","black"); txt.setAttribute("stroke-width","1");
+        txt.textContent=num; svg.appendChild(txt);
     });
 
-    addBull(svg,cx,cy,bullOuter,"green","SB");
-    addBull(svg,cx,cy,bullInner,"red","DB");
+    addBull(svg,cx,cy,bullOuter,"green","SB"); addBull(svg,cx,cy,bullInner,"red","DB");
     container.appendChild(svg);
 }
 
 function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,type,num,mult){
     const path=document.createElementNS("http://www.w3.org/2000/svg","path");
     path.setAttribute("d",describeArc(cx,cy,rOuter,rInner,startAngle,endAngle));
-    path.setAttribute("fill",color);
-    path.style.cursor="pointer";
+    path.setAttribute("fill",color); path.style.cursor="pointer";
     path.addEventListener("click",()=>hitSegment(type,num,mult));
     svg.appendChild(path);
 }
@@ -117,9 +100,9 @@ function addBull(svg,cx,cy,r,color,type){
 function hitSegment(type,num,mult){
     if(darts.length>=3) return;
     darts.push(`${type}${num}`);
-    const total = darts.reduce((sum,val)=>{
-        const m = val.startsWith("T")?3:(val.startsWith("D")?2:1);
-        const n = parseInt(val.slice(1));
+    const total=darts.reduce((sum,val)=>{
+        const m=val.startsWith("T")?3:(val.startsWith("D")?2:1);
+        const n=parseInt(val.slice(1));
         return sum+n*m;
     },0);
     updateDartsDisplay(); beep();
@@ -134,7 +117,7 @@ function hitSegment(type,num,mult){
 
 function updateDartsDisplay(){ document.getElementById("darts-display").textContent=darts.join(", "); }
 
-function addHistory(correct, standard, total){
+function addHistory(correct,standard,total){
     const tbody=document.querySelector("#history-table tbody");
     const tr=document.createElement("tr");
     tr.innerHTML=`<td>${targetScore}</td><td>${darts.join(", ")}</td><td>${total}</td><td>${correct?"✔":"✖"}</td><td>${standard}</td>`;
@@ -144,14 +127,13 @@ function addHistory(correct, standard, total){
 function indicateResult(correct){
     const resultBox=document.getElementById("result-box");
     resultBox.textContent=correct?"✔":"✖";
-    resultBox.style.color = correct?"green":"red";
+    resultBox.style.color=correct?"green":"red";
 }
 
 function resetRound(){}
 
 function newTarget(){
-    targetScore = Math.floor(Math.random()*131)+40;
-    darts = [];
+    targetScore=Math.floor(Math.random()*131)+40; darts=[];
     updateDartsDisplay();
     document.getElementById("target-display").textContent=targetScore;
     document.getElementById("target-display").style.color="black";
