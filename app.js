@@ -1,4 +1,4 @@
-// Dart Checkout Trainer - Version 1.1 (Visual Enhancements)
+// Dart Checkout Trainer - Version 1.2 (Traditional Colors & Enhanced Board)
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let targetScore = 0, darts = [], score = 0, dartMarkers = [], soundOn = true;
@@ -67,60 +67,60 @@ function createDartboard(){
   const segmentAngle=2*Math.PI/totalSegments;
   const startOffset=-Math.PI/2 - segmentAngle/2;
 
-  const singleOuter=170,singleInner=45;
-  const tripleOuter=120,tripleInner=100;
+  const singleOuter=170,singleInner=50;
+  const tripleOuter=120,tripleInner=90;
   const doubleOuter=190,doubleInner=170;
-  const bullOuter=45,bullInner=20;
+  const bullOuter=35,bullInner=20;
 
- segmentOrder.forEach((num,i)=>{
-  const startAngle = startOffset + i*segmentAngle;
-  const endAngle = startAngle + segmentAngle;
+  segmentOrder.forEach((num,i)=>{
+    const startAngle=startOffset + i*segmentAngle;
+    const endAngle=startAngle + segmentAngle;
 
-  // Alternate single colors like a real dartboard
-  const singleColor = i % 2 === 0 ? "#f5f5dc" : "#000000"; // beige & black
+    // Traditional dartboard colors
+    const singleColor = i%2===0 ? "#ffffff" : "#000000";
+    const tripleColor = i%2===0 ? "#ff0000" : "#008000"; // Red/Green
+    const doubleColor = i%2===0 ? "#ff0000" : "#008000"; // Red/Green
 
-  // Triple and double rings colors: odd=red, even=green
-  const tripleColor = i % 2 === 0 ? "#ff0000" : "#008000";   // red & green
-  const doubleColor = i % 2 === 0 ? "#ff0000" : "#008000";   // red & green
+    addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,singleColor,"S",num,1);
+    addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,tripleColor,"T",num,3);
+    addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,singleColor,"S",num,1);
+    addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,doubleColor,"D",num,2);
 
-  addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,singleColor,"S",num,1);
-  addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,tripleColor,"T",num,3);
-  addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,singleColor,"S",num,1);
-  addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,doubleColor,"D",num,2);
+    // Outer numbers
+    const numberRadius = doubleOuter + 15;
+    const angle = (startAngle + endAngle)/2;
+    const pos = polarToCartesian(cx, cy, numberRadius, angle);
+    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x", pos.x);
+    txt.setAttribute("y", pos.y);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("dominant-baseline", "middle");
+    txt.setAttribute("font-size", "18");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("fill", "#FFD700");
+    txt.setAttribute("stroke", "black");
+    txt.setAttribute("stroke-width", "1.5");
+    txt.textContent=num;
+    svg.appendChild(txt);
+  });
 
-  // Outer numbers remain gold with black outline
-  const numberRadius = doubleOuter + 15;
-  const angle = (startAngle + endAngle)/2;
-  const pos = polarToCartesian(cx, cy, numberRadius, angle);
-  const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
-  txt.setAttribute("x", pos.x);
-  txt.setAttribute("y", pos.y);
-  txt.setAttribute("text-anchor", "middle");
-  txt.setAttribute("dominant-baseline", "middle");
-  txt.setAttribute("font-size", "18");
-  txt.setAttribute("font-weight", "bold");
-  txt.setAttribute("fill", "#FFD700");
-  txt.setAttribute("stroke", "black");
-  txt.setAttribute("stroke-width", "1.5");
-  txt.textContent=num;
-  svg.appendChild(txt);
-});
+  addBull(svg,cx,cy,bullOuter,"green","SB");
+  addBull(svg,cx,cy,bullInner,"red","DB");
 
+  container.appendChild(svg);
+}
 
 // --- Add Segment ---
 function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,ringType,num,mult){
-  const path = document.createElementNS("http://www.w3.org/2000/svg","path");
-  path.setAttribute("d", describeArc(cx, cy, rOuter, rInner, startAngle, endAngle));
-  path.setAttribute("fill", color);
-  path.setAttribute("stroke", "#000");           // Add black border
-  path.setAttribute("stroke-width", "1");        // Border thickness
-  path.style.cursor = "pointer";
+  const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+  path.setAttribute("d",describeArc(cx,cy,rOuter,rInner,startAngle,endAngle));
+  path.setAttribute("fill",color);
+  path.style.cursor="pointer";
 
-  // Hover highlight
-  path.addEventListener("mouseenter", ()=>path.setAttribute("fill", lightenColor(color,0.3)));
-  path.addEventListener("mouseleave", ()=>path.setAttribute("fill", color));
+  path.addEventListener("mouseenter",()=>path.setAttribute("fill",lightenColor(color,0.3)));
+  path.addEventListener("mouseleave",()=>path.setAttribute("fill",color));
 
-  path.addEventListener("click", ()=>hitSegment(num, mult, {cx, cy, ring: ringType, angle: (startAngle+endAngle)/2, rOuter, rInner}));
+  path.addEventListener("click",()=>hitSegment(num,mult,{cx,cy,ring:ringType,angle:(startAngle+endAngle)/2,rOuter,rInner}));
   svg.appendChild(path);
 }
 
@@ -131,8 +131,6 @@ function addBull(svg, cx, cy, r, color, ringType){
   bull.setAttribute("cy", cy);
   bull.setAttribute("r", r);
   bull.setAttribute("fill", color);
-  bull.setAttribute("stroke", "#000");    // Black outline for bulls
-  bull.setAttribute("stroke-width", "1.5");
   bull.style.cursor = "pointer";
 
   bull.addEventListener("click", () => {
