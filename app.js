@@ -72,39 +72,40 @@ function createDartboard(){
   const doubleOuter=190,doubleInner=170;
   const bullOuter=45,bullInner=20;
 
-  segmentOrder.forEach((num,i)=>{
-    const startAngle=startOffset + i*segmentAngle;
-    const endAngle=startAngle + segmentAngle;
+ segmentOrder.forEach((num,i)=>{
+  const startAngle = startOffset + i*segmentAngle;
+  const endAngle = startAngle + segmentAngle;
 
-addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,i%2===0?"#ffffff":"#000000","S",num,1); // Single
-addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","T",num,3); // Triple ring
-addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#ffffff":"#000000","S",num,1); // Inner single
-addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2); // Double ring
+  // Alternate single colors like a real dartboard
+  const singleColor = i % 2 === 0 ? "#f5f5dc" : "#000000"; // beige & black
 
+  // Triple and double rings colors: odd=red, even=green
+  const tripleColor = i % 2 === 0 ? "#ff0000" : "#008000";   // red & green
+  const doubleColor = i % 2 === 0 ? "#ff0000" : "#008000";   // red & green
 
-    // --- Outer numbers ---
-    const numberRadius = doubleOuter + 15;
-    const angle = (startAngle + endAngle)/2;
-    const pos = polarToCartesian(cx, cy, numberRadius, angle);
-    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
-    txt.setAttribute("x", pos.x);
-    txt.setAttribute("y", pos.y);
-    txt.setAttribute("text-anchor", "middle");
-    txt.setAttribute("dominant-baseline", "middle");
-    txt.setAttribute("font-size", "18");
-    txt.setAttribute("font-weight", "bold");
-    txt.setAttribute("fill", "#FFD700");
-    txt.setAttribute("stroke", "black");
-    txt.setAttribute("stroke-width", "1.5");
-    txt.textContent=num;
-    svg.appendChild(txt);
-  });
+  addSegment(svg,cx,cy,singleOuter,tripleOuter,startAngle,endAngle,singleColor,"S",num,1);
+  addSegment(svg,cx,cy,tripleOuter,tripleInner,startAngle,endAngle,tripleColor,"T",num,3);
+  addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,singleColor,"S",num,1);
+  addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,doubleColor,"D",num,2);
 
-addBull(svg,cx,cy,bullOuter,"green","SB"); // Outer Bull
-addBull(svg,cx,cy,bullInner,"red","DB");   // Inner Bull
+  // Outer numbers remain gold with black outline
+  const numberRadius = doubleOuter + 15;
+  const angle = (startAngle + endAngle)/2;
+  const pos = polarToCartesian(cx, cy, numberRadius, angle);
+  const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+  txt.setAttribute("x", pos.x);
+  txt.setAttribute("y", pos.y);
+  txt.setAttribute("text-anchor", "middle");
+  txt.setAttribute("dominant-baseline", "middle");
+  txt.setAttribute("font-size", "18");
+  txt.setAttribute("font-weight", "bold");
+  txt.setAttribute("fill", "#FFD700");
+  txt.setAttribute("stroke", "black");
+  txt.setAttribute("stroke-width", "1.5");
+  txt.textContent=num;
+  svg.appendChild(txt);
+});
 
-  container.appendChild(svg);
-}
 
 // --- Add Segment ---
 function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,ringType,num,mult){
