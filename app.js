@@ -1,4 +1,4 @@
-// Dart Checkout Trainer - Full Updated with Standard Outs Only
+// Dart Checkout Trainer - Full Updated with Enlarged Bulls & Gold Numbers
 
 const segmentOrder = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let targetScore = 0, darts = [], score = 0, dartMarkers = [], soundOn = true;
@@ -70,7 +70,7 @@ function createDartboard(){
   const singleOuter=160,singleInner=50;
   const tripleOuter=120,tripleInner=90;
   const doubleOuter=190,doubleInner=160;
-  const bullOuter=30,bullInner=18;
+  const bullOuter=40,bullInner=25; // Increased for larger clickable area
 
   segmentOrder.forEach((num,i)=>{
     const startAngle=startOffset + i*segmentAngle;
@@ -81,18 +81,26 @@ function createDartboard(){
     addSegment(svg,cx,cy,tripleInner,singleInner,startAngle,endAngle,i%2===0?"#eee":"#ccc","S",num,1);
     addSegment(svg,cx,cy,doubleOuter,doubleInner,startAngle,endAngle,i%2===0?"#cc0000":"#009900","D",num,2);
 
+    // --- Outer numbers with gold fill and black outline ---
     const numberRadius = doubleOuter + 25;
     const angle = (startAngle + endAngle)/2;
     const pos = polarToCartesian(cx, cy, numberRadius, angle);
     const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
-    txt.setAttribute("x", pos.x); txt.setAttribute("y", pos.y);
-    txt.setAttribute("text-anchor", "middle"); txt.setAttribute("dominant-baseline", "middle");
-    txt.setAttribute("font-size", "16"); txt.setAttribute("font-weight", "bold"); txt.setAttribute("fill", "#FFD700");
-    txt.textContent=num; svg.appendChild(txt);
+    txt.setAttribute("x", pos.x);
+    txt.setAttribute("y", pos.y);
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("dominant-baseline", "middle");
+    txt.setAttribute("font-size", "16");
+    txt.setAttribute("font-weight", "bold");
+    txt.setAttribute("fill", "#FFD700");
+    txt.setAttribute("stroke", "black");
+    txt.setAttribute("stroke-width", "1");
+    txt.textContent=num;
+    svg.appendChild(txt);
   });
 
-  addBull(svg,cx,cy,bullOuter,"green","SB");
-  addBull(svg,cx,cy,bullInner,"red","DB");
+  addBull(svg,cx,cy,bullOuter,"green","SB"); // Outer Bull
+  addBull(svg,cx,cy,bullInner,"red","DB");   // Inner Bull
 
   container.appendChild(svg);
 }
@@ -105,14 +113,19 @@ function addSegment(svg,cx,cy,rOuter,rInner,startAngle,endAngle,color,ringType,n
   svg.appendChild(path);
 }
 
-function addBull(svg,cx,cy,r,color,ringType){
-  const bull=document.createElementNS("http://www.w3.org/2000/svg","circle");
-  bull.setAttribute("cx",cx); bull.setAttribute("cy",cy); bull.setAttribute("r",r);
-  bull.setAttribute("fill",color); bull.style.cursor="pointer";
-  bull.addEventListener("click",()=>{
-    const mult = (ringType==="DB"?2:1);
-    hitSegment(25, mult, {cx,cy,ring:ringType,rOuter:r,rInner:0});
+function addBull(svg, cx, cy, r, color, ringType){
+  const bull = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  bull.setAttribute("cx", cx);
+  bull.setAttribute("cy", cy);
+  bull.setAttribute("r", r);
+  bull.setAttribute("fill", color);
+  bull.style.cursor = "pointer";
+
+  bull.addEventListener("click", () => {
+    const mult = (ringType === "DB" ? 2 : 1);
+    hitSegment(25, mult, { cx, cy, ring: ringType, rOuter: r, rInner: ringType==="DB"?0:25 });
   });
+
   svg.appendChild(bull);
 }
 
